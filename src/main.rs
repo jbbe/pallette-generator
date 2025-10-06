@@ -1,5 +1,5 @@
 use raqote::*;
-use std::{env, fs };
+use std::{env, fs};
 
 pub struct PColor {
     pub r: u8,
@@ -9,10 +9,10 @@ pub struct PColor {
 
 impl PColor {
     pub fn default(color: String) -> Self {
-    let r_in = u8::from_str_radix(&color[1..3], 16).unwrap();
-    let g_in = u8::from_str_radix(&color[3..5], 16).unwrap();
-    let b_in = u8::from_str_radix(&color[5..7], 16).unwrap();
-    println!("color {r_in}, {g_in}, {b_in}");
+        let r_in = u8::from_str_radix(&color[1..3], 16).unwrap();
+        let g_in = u8::from_str_radix(&color[3..5], 16).unwrap();
+        let b_in = u8::from_str_radix(&color[5..7], 16).unwrap();
+        // println!("color {r_in}, {g_in}, {b_in}");
         return Self {
             r: r_in,
             g: g_in,
@@ -20,7 +20,6 @@ impl PColor {
         };
     }
 }
-
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -49,8 +48,8 @@ fn main() {
     pb.close();
     let path = pb.finish();
     // let solid = SolidSource::from_unpremultiplied_argb(0xff, 0, 0, 0);
-    let solid = SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0xff,0xff);
-    dt.fill(&path, & &Source::Solid(solid), &DrawOptions::new());
+    let solid = SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0xff, 0xff);
+    dt.fill(&path, &&Source::Solid(solid), &DrawOptions::new());
 
     let mut current_x = 0.;
     let mut current_y = margin;
@@ -67,7 +66,7 @@ fn main() {
         let path = pb.finish();
         let p_col = PColor::default(color.to_string());
         let solid = SolidSource::from_unpremultiplied_argb(0xff, p_col.r, p_col.g, p_col.b);
-        dt.fill(&path, & &Source::Solid(solid), &DrawOptions::new());
+        dt.fill(&path, &&Source::Solid(solid), &DrawOptions::new());
         current_col += 1;
         if current_col > col_count {
             current_col = 0;
@@ -77,5 +76,5 @@ fn main() {
             current_x += square_size;
         }
     }
-    let _ = dt.write_png(format!("{pal_name}.png"));
+    let _ = dt.write_png(format!("pallettes/{pal_name}.png"));
 }
