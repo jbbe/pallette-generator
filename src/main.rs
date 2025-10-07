@@ -1,7 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 #![allow(rustdoc::missing_crate_level_docs)] // it's an example
-use eframe::{egui, egui_glow::painter};
-use egui::{Pos2, Rect, Shape};
+use eframe::egui;
 use image::{ImageReader, Rgb};
 use raqote::*;
 use std::collections::HashMap;
@@ -50,12 +49,12 @@ impl PColor {
 //     p_color.r == rgb[0] && p_color.g == rgb[1] && p_color.b == rgb[2]
 // }
 
-fn rgb_from_str(color: &str) -> Rgb<u8> {
-    let r_in = u8::from_str_radix(&color[1..3], 16).unwrap();
-    let g_in = u8::from_str_radix(&color[3..5], 16).unwrap();
-    let b_in = u8::from_str_radix(&color[5..7], 16).unwrap();
-    Rgb([r_in, g_in, b_in])
-}
+// fn rgb_from_str(color: &str) -> Rgb<u8> {
+//     let r_in = u8::from_str_radix(&color[1..3], 16).unwrap();
+//     let g_in = u8::from_str_radix(&color[3..5], 16).unwrap();
+//     let b_in = u8::from_str_radix(&color[5..7], 16).unwrap();
+//     Rgb([r_in, g_in, b_in])
+// }
 
 fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -78,7 +77,7 @@ struct MyApp {
     picked_path: Option<String>,
     pallette: Pallette,
     display: bool,
-    pallette_name: String
+    pallette_name: String,
 }
 
 impl eframe::App for MyApp {
@@ -101,9 +100,6 @@ impl eframe::App for MyApp {
                     self.pallette.update(picked_path);
                     self.display = true
                 }
-                // if let Some(p) = &self.pallette {
-                // }
-                // ui.vertical(ui.)
             }
             if self.display {
                 //     use eframe::egui;
@@ -112,15 +108,46 @@ impl eframe::App for MyApp {
                 // let rects = self.pallette.colors.iter().map(|c|{
                 //     egui::Rect::from_min_size(egui::pos2(10.0, 10.0), egui::vec2(50.0, 30.0)),
                 // }).collect();
-                let mut painter = ui.painter();
-                for i in 0..self.pallette.colors.len() {
-                    let x_offset = 10. * (i as f32) * 60.;
-                    let rect= egui::Rect::from_min_size(egui::pos2(x_offset, 10.0), egui::vec2(40.0, 30.0));
-                    let c = self.pallette.colors[i];
-                    let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
-                    painter.rect_filled(rect, 0.0, color);
+                // let mut painter = ui.painter();
+                let num_columns = 3; // Set the desired number of columns
 
-                }
+                // Create a grid and add items to it
+                ui.horizontal(|ui| {
+                    ui.group(|ui| {
+                        egui::Grid::new("my_grid").show(ui, |ui| {
+                            for i in 0..self.pallette.top_colors.len() {
+                                // let x_offset = 10. * (i as f32) * 60.;
+                                // let rect= egui::Rect::from_min_size(egui::pos2(x_offset, 10.0), egui::vec2(40.0, 30.0));
+                                let c = self.pallette.top_colors[i];
+                                let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
+                                // painter.rect_filled(rect, 0.0, color);
+                                if ui
+                                    .add(
+                                        egui::Button::new(egui::RichText::new("Copy"))
+                                            .fill(color)
+                                            .sense(egui::Sense::click()),
+                                    )
+                                    .clicked()
+                                {
+                                    let hex = rgb_to_hex(c);
+                                    println!("Copy {hex}");
+                                    // ui.output().copied_text = hex.to_owned();
+                                        // ui.output_mut(|o| o.copied_text = hex.to_owned());
+                                        ctx.copy_text(hex.to_owned());
+                                }
+                                if ui
+                                    .add(egui::Button::new(egui::RichText::new("Swap")))
+                                    .clicked()
+                                {
+                                    self.pallette.swap_top_color(i);
+                                }
+                                if (i + 1) % num_columns == 0 {
+                                    ui.end_row(); // End the row after the specified number of columns
+                                }
+                            }
+                        });
+                    });
+                });
                 // vec![.
                 //     egui::Rect::from_min_size(egui::pos2(10.0, 10.0), egui::vec2(50.0, 30.0)),
                 //     egui::Rect::from_min_size(egui::pos2(70.0, 10.0), egui::vec2(50.0, 30.0)),
@@ -133,10 +160,6 @@ impl eframe::App for MyApp {
                     self.pallette.save(self.pallette_name.clone())
                 }
             }
-
-            // if self.pallette.colors.len() > 0 {
-            //     // ui.vertical()
-            // }
 
             // Show dropped files (if any):
             if !self.dropped_files.is_empty() {
@@ -178,23 +201,28 @@ impl eframe::App for MyApp {
             }
         });
     }
+
+    // fn color_square(&mut self, idx: usize) {
+
+    // }
 }
 
 #[derive(Default)]
 struct Pallette {
-    colors: Vec<Rgb<u8>>,
+    top_colors: Vec<Rgb<u8>>,
     current_path: Option<String>,
+    all_entries: Vec<(Rgb<u8>, usize)>,
 }
 
 impl Pallette {
-    pub fn new() -> Self {
-        Self {
-            colors: Vec::new(),
-            current_path: None,
-        }
-    }
+    // pub fn new() -> Self {
+    //     Self {
+    //         colors: Vec::new(),
+    //         current_path: None,
+    //     }
+    // }
     pub fn update(&mut self, path: &String) {
-        if let (Some(cur)) = (&self.current_path) {
+        if let Some(cur) = &self.current_path {
             // Return early if they are the same
             if cur == path {
                 return;
@@ -209,35 +237,54 @@ impl Pallette {
         let map = extract_pallete(&self.current_path.clone().unwrap()).unwrap();
 
         // let full_pallette = extract_pallete(pal_name, &file_path).unwrap();
-
-        let top_colors = get_top_colors(map, 50);
-        self.colors = top_colors;
-        // let top_colors = reduce_pallette(full_pallette, 10);
-        // if let Some(m) = map {
-
-        // self.colors = Self::get_top_colors(map.unwrap(), top_n)
-        // m.iter().collect();
-        // }
-        // update_colors()
-        // }
+        let entries = get_sorted_entries(map);
+        let top_colors = get_top_colors(entries, 50);
+        self.top_colors = top_colors;
     }
+
+    pub fn get_unused_entry(&mut self) -> Option<Rgb<u8>> {
+        for e in self.all_entries.iter() {
+            if !self.top_colors.contains(&e.0) {
+                return Some(e.0.clone());
+            }
+        }
+        None
+    }
+
+    fn swap_top_color(&mut self, idx: usize) {
+        let e = self.get_unused_entry();
+        match e {
+            Some(c) => self.top_colors[idx] = c,
+            None => (),
+        }
+        // self.top_colors[idx] =
+    }
+
     pub fn save(&mut self, pallette_name: String) {
         // let i =rand
-        output_pallette(self.colors.clone(), &pallette_name);
+        output_pallette(self.top_colors.clone(), &pallette_name);
     }
 }
-fn get_top_colors(pallette: HashMap<Rgb<u8>, usize>, top_n: usize) -> Vec<Rgb<u8>> {
-    let mut entries: Vec<(&Rgb<u8>, &usize)> = pallette.iter().collect();
+
+fn rgb_to_hex(color: Rgb<u8>) -> String {
+    format!("#{:02X}{:02X}{:02X}", color[0], color[1], color[2])
+}
+
+fn get_sorted_entries(pallette: HashMap<Rgb<u8>, usize>) -> Vec<(Rgb<u8>, usize)> {
+    let mut entries: Vec<(Rgb<u8>, usize)> = pallette.into_iter().collect();
 
     // Sort by the count in descending order
-    entries.sort_by(|a, b| b.1.cmp(a.1));
+    entries.sort_by(|a, b| b.1.cmp(&a.1));
+    entries
+}
 
+fn get_top_colors(entries: Vec<(Rgb<u8>, usize)>, top_n: usize) -> Vec<Rgb<u8>> {
     // Take the top N entries
     entries
         .into_iter()
         .map(|e| e.0)
         .take(top_n)
-        .cloned()
+        // .cloned()
         .collect()
 }
 
