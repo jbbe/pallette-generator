@@ -78,6 +78,7 @@ struct MyApp {
     picked_path: Option<String>,
     pallette: Pallette,
     display: bool,
+    pallette_name: String
 }
 
 impl eframe::App for MyApp {
@@ -100,9 +101,6 @@ impl eframe::App for MyApp {
                     self.pallette.update(picked_path);
                     self.display = true
                 }
-                if ui.button("Save").clicked() {
-                    self.pallette.save()
-                }
                 // if let Some(p) = &self.pallette {
                 // }
                 // ui.vertical(ui.)
@@ -117,7 +115,7 @@ impl eframe::App for MyApp {
                 let mut painter = ui.painter();
                 for i in 0..self.pallette.colors.len() {
                     let x_offset = 10. * (i as f32) * 60.;
-                    let rect= egui::Rect::from_min_size(egui::pos2(x_offset, 10.0), egui::vec2(x_offset + 40.0, 30.0));
+                    let rect= egui::Rect::from_min_size(egui::pos2(x_offset, 10.0), egui::vec2(40.0, 30.0));
                     let c = self.pallette.colors[i];
                     let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
                     painter.rect_filled(rect, 0.0, color);
@@ -128,7 +126,12 @@ impl eframe::App for MyApp {
                 //     egui::Rect::from_min_size(egui::pos2(70.0, 10.0), egui::vec2(50.0, 30.0)),
                 //     egui::Rect::from_min_size(egui::pos2(130.0, 10.0), egui::vec2(50.0, 30.0)),
                 // ];
+                ui.text_edit_singleline(&mut self.pallette_name);
 
+                if ui.button("Save").clicked() {
+                    println!("Save clicked");
+                    self.pallette.save(self.pallette_name.clone())
+                }
             }
 
             // if self.pallette.colors.len() > 0 {
@@ -218,9 +221,9 @@ impl Pallette {
         // update_colors()
         // }
     }
-    pub fn save(&mut self) {
+    pub fn save(&mut self, pallette_name: String) {
         // let i =rand
-        output_pallette(self.colors.clone(), "placehold");
+        output_pallette(self.colors.clone(), &pallette_name);
     }
 }
 fn get_top_colors(pallette: HashMap<Rgb<u8>, usize>, top_n: usize) -> Vec<Rgb<u8>> {
@@ -321,6 +324,7 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
 // #region core
 
 fn output_pallette(colors: Vec<Rgb<u8>>, pal_name: &str) {
+    println!("Output pallette");
     let square_size = 64.;
     let margin = 16.;
     let width = 512;
