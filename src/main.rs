@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 #![allow(rustdoc::missing_crate_level_docs)] // it's an example
-use eframe::egui;
+use eframe::{egui, egui_glow::painter};
+use egui::{Pos2, Rect, Shape};
 use image::{ImageReader, Rgb};
 use raqote::*;
 use std::collections::HashMap;
@@ -76,6 +77,7 @@ struct MyApp {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
     pallette: Pallette,
+    display: bool,
 }
 
 impl eframe::App for MyApp {
@@ -96,8 +98,8 @@ impl eframe::App for MyApp {
                 });
                 if ui.button("Extract Pallette").clicked() {
                     self.pallette.update(picked_path);
+                    self.display = true
                 }
-
                 if ui.button("Save").clicked() {
                     self.pallette.save()
                 }
@@ -105,10 +107,26 @@ impl eframe::App for MyApp {
                 // }
                 // ui.vertical(ui.)
             }
+            if self.display {
+                //     use eframe::egui;
 
-            if self.pallette.colors.len() > 0 {
-                // ui.vertical()
+                // Drawing rectangles
+                let color = egui::Color32::from_rgb(100, 150, 200);
+                let rects = vec![
+                    egui::Rect::from_min_size(egui::pos2(10.0, 10.0), egui::vec2(50.0, 30.0)),
+                    egui::Rect::from_min_size(egui::pos2(70.0, 10.0), egui::vec2(50.0, 30.0)),
+                    egui::Rect::from_min_size(egui::pos2(130.0, 10.0), egui::vec2(50.0, 30.0)),
+                ];
+
+                let mut painter = ui.painter();
+                for rect in rects {
+                    painter.rect_filled(rect, 0.0, color);
+                }
             }
+
+            // if self.pallette.colors.len() > 0 {
+            //     // ui.vertical()
+            // }
 
             // Show dropped files (if any):
             if !self.dropped_files.is_empty() {
@@ -187,16 +205,15 @@ impl Pallette {
         // let top_colors = reduce_pallette(full_pallette, 10);
         // if let Some(m) = map {
 
-            // self.colors = Self::get_top_colors(map.unwrap(), top_n)
-            // m.iter().collect();
-            // }
-            // update_colors()
+        // self.colors = Self::get_top_colors(map.unwrap(), top_n)
+        // m.iter().collect();
+        // }
+        // update_colors()
         // }
     }
     pub fn save(&mut self) {
         // let i =rand
         output_pallette(self.colors.clone(), "placehold");
-
     }
 }
 fn get_top_colors(pallette: HashMap<Rgb<u8>, usize>, top_n: usize) -> Vec<Rgb<u8>> {
@@ -223,6 +240,8 @@ fn extract_pallete(path: &str) -> Option<HashMap<Rgb<u8>, usize>> {
     for pixel in rgb.pixels() {
         *pix.entry(*pixel).or_insert(0) += 1
     }
+
+    println!("Pallette extracted");
 
     Some(pix)
 }
