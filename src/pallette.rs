@@ -104,6 +104,13 @@ impl Pallette {
         }
     }
 
+    pub fn reset(&mut self) {
+        self.top_colors = Vec::new();
+        self.current_path = None;
+        self.all_entries = Vec::new();
+        self.pallette_size = 16;
+    }
+
     pub fn rgb_to_hex(color: Rgb<u8>) -> String {
         format!("#{:02X}{:02X}{:02X}", color[0], color[1], color[2])
     }

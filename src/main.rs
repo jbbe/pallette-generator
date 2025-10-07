@@ -50,7 +50,6 @@ impl eframe::App for MyApp {
                     ui.monospace(picked_path);
                 });
                 if ui.button("Extract Pallette").clicked() {
-                    // handle_extract_click(picked_path);
                     self.pallette.update(&picked_path);
                     self.display = true;
                     if let Ok(img) = load_image(&picked_path) {
@@ -72,16 +71,16 @@ impl eframe::App for MyApp {
                     }
                 });
 
-                let num_columns = 4; // Set the desired number of columns
                 let pallette_button_size = egui::vec2(100., 100.);
                 // Create a grid and add items to it
                 ui.horizontal(|ui| {
                     if let Some(texture_id) = &self.texture_id {
-                        let desired_size = egui::vec2(300.0, 200.0);
+                        let desired_size = egui::vec2(400.0, 500.0);
                         ui.add(egui::Image::new(texture_id).fit_to_exact_size(desired_size));
                     } else {
                         ui.label("Loading image...");
                     }
+                    let num_columns = 4; // Set the desired number of columns
                     ui.group(|ui| {
                         egui::Grid::new("my_grid").show(ui, |ui| {
                             for i in 0..self.pallette.top_colors.len() {
@@ -123,6 +122,15 @@ impl eframe::App for MyApp {
                 if ui.button("Save as Text").clicked() {
                     println!("Save clicked");
                     self.pallette.save_pallette_text(self.pallette_name.clone())
+                }
+
+                if ui.button("Reset").clicked() {
+                    println!("reset");
+                    self.pallette.reset();
+                    self.picked_path = None;
+                    self.display = false;
+                    self.texture_id = None;
+                    self.dropped_files = Vec::new();
                 }
             }
 
@@ -230,35 +238,3 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
         );
     }
 }
-
-// fn main() {
-//     let args: Vec<String> = env::args().collect();
-
-//     let prog = &args[1];
-//     let pal_name = &args[2];
-//     let file_path = &args[3];
-
-//     if prog == "gen" {
-//         println!("Generating pallette {pal_name}");
-
-//         let contents =
-//             fs::read_to_string(file_path).expect("Should have been able to read the file");
-
-//         let colors: Vec<&str> = contents.split("\n").collect();
-//         let p_colors = colors
-//             .iter()
-//             // .map(|&color| PColor::from_string(color.to_string()))
-//             .map(|&color| rgb_from_str(color))
-//             .collect();
-//         output_pallette(p_colors, pal_name)
-//     }
-//     if prog == "extract" {
-//         let full_pallette = extract_pallete(pal_name, &file_path).unwrap();
-
-//         let top_colors = get_top_colors(full_pallette, 50);
-//         // let top_colors = reduce_pallette(full_pallette, 10);
-//         output_pallette(top_colors, pal_name);
-//     }
-// }
-
-// #region core
