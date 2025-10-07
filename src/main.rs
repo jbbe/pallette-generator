@@ -94,10 +94,20 @@ impl eframe::App for MyApp {
                     ui.label("Picked file:");
                     ui.monospace(picked_path);
                 });
+                if ui.button("Extract Pallette").clicked() {
+                    self.pallette.update(picked_path);
+                }
+
+                if ui.button("Save").clicked() {
+                    self.pallette.save()
+                }
                 // if let Some(p) = &self.pallette {
-                self.pallette.update(picked_path);
                 // }
                 // ui.vertical(ui.)
+            }
+
+            if self.pallette.colors.len() > 0 {
+                // ui.vertical()
             }
 
             // Show dropped files (if any):
@@ -144,7 +154,7 @@ impl eframe::App for MyApp {
 
 #[derive(Default)]
 struct Pallette {
-    colors: Vec<(Rgb<u8>, usize)>,
+    colors: Vec<Rgb<u8>>,
     current_path: Option<String>,
 }
 
@@ -173,8 +183,8 @@ impl Pallette {
         // let full_pallette = extract_pallete(pal_name, &file_path).unwrap();
 
         let top_colors = get_top_colors(map, 50);
+        self.colors = top_colors;
         // let top_colors = reduce_pallette(full_pallette, 10);
-        output_pallette(top_colors, "first");
         // if let Some(m) = map {
 
             // self.colors = Self::get_top_colors(map.unwrap(), top_n)
@@ -182,6 +192,11 @@ impl Pallette {
             // }
             // update_colors()
         // }
+    }
+    pub fn save(&mut self) {
+        // let i =rand
+        output_pallette(self.colors.clone(), "placehold");
+
     }
 }
 fn get_top_colors(pallette: HashMap<Rgb<u8>, usize>, top_n: usize) -> Vec<Rgb<u8>> {
