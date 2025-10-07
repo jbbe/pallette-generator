@@ -1,3 +1,4 @@
+use image::{ImageReader, Rgb};
 use raqote::*;
 use std::{env, fs};
 
@@ -8,7 +9,7 @@ pub struct PColor {
 }
 
 impl PColor {
-    pub fn default(color: String) -> Self {
+    pub fn from_string(color: String) -> Self {
         let r_in = u8::from_str_radix(&color[1..3], 16).unwrap();
         let g_in = u8::from_str_radix(&color[3..5], 16).unwrap();
         let b_in = u8::from_str_radix(&color[5..7], 16).unwrap();
@@ -19,22 +20,66 @@ impl PColor {
             b: b_in,
         };
     }
+    pub fn new(r_in: u8, g_in: u8, b_in: u8) -> Self {
+        Self {
+            r: r_in,
+            g: g_in,
+            b: b_in,
+        }
+    }
+    // fn eq(&self, other: &Self) -> bool {
+    //     self.r == other.r && self.g == other.g && self.b == other.b
+    // }
+}
+
+fn rgb_eq(p_color: &PColor, rgb: &Rgb<u8>) -> bool {
+    p_color.r == rgb[0] && p_color.g == rgb[1] && p_color.b == rgb[2]
 }
 
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    // let query = &args[1];
-    let pal_name = &args[1];
-    let file_path = &args[2];
+    let prog = &args[1];
+    let pal_name = &args[2];
+    let file_path = &args[3];
 
-    // println!("In file {file_path}");
-    let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
+    if prog == "gen" {
+        println!("Generating pallette {pal_name}");
 
-    // println!("With text:\n{contents}");
+        let contents =
+            fs::read_to_string(file_path).expect("Should have been able to read the file");
 
-    let colors: Vec<&str> = contents.split("\n").collect();
+        let colors: Vec<&str> = contents.split("\n").collect();
+        let p_colors = colors.iter().map(|&color| { PColor::from_string(color.to_string())}).collect();
+        output_pallette(p_colors, pal_name)
+    }
+    if prog == "extract" {
+        let colors = extract_pallete(pal_name, &file_path).unwrap();
+        output_pallette(colors, pal_name);
+    }
+}
 
+
+
+fn extract_pallete(pal_name: &str, path: &str) -> Option<Vec<PColor>> {
+    println!("Extracting Pallette from {pal_name} ");
+    // let image_reader = ImageReader::open(pal_name).unwrap();
+    // let img = image_reader.decode();
+    let img = ImageReader::open(path).unwrap().decode().unwrap();
+    let rgb = img.to_rgb8();
+    let mut pixels = Vec::<PColor>::new();
+    for pixel in rgb.pixels() {
+        if !pixels.iter().any(|p| { rgb_eq(p, pixel) }) {
+            pixels.push(PColor::new(pixel[0], pixel[1], pixel[2]));
+        }
+        // pixel
+    }
+    let pix_len = pixels.len();
+    println!("Pixels {pix_len}");
+    Some(pixels)
+}
+
+fn output_pallette(colors: Vec<PColor>, pal_name: &str) {
     let square_size = 64.;
     let margin = 16.;
     let width = 512;
@@ -64,8 +109,7 @@ fn main() {
         pb.rect(current_x, current_y, square_size, square_size);
         pb.close();
         let path = pb.finish();
-        let p_col = PColor::default(color.to_string());
-        let solid = SolidSource::from_unpremultiplied_argb(0xff, p_col.r, p_col.g, p_col.b);
+        let solid = SolidSource::from_unpremultiplied_argb(0xff, color.r, color.g, color.b);
         dt.fill(&path, &&Source::Solid(solid), &DrawOptions::new());
         current_col += 1;
         if current_col > col_count {
