@@ -1,4 +1,4 @@
-// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 #![allow(rustdoc::missing_crate_level_docs)] // it's an example
 use image::{ImageReader, Rgb};
 use raqote::*;
@@ -57,7 +57,6 @@ fn rgb_from_str(color: &str) -> Rgb<u8> {
     Rgb([r_in, g_in, b_in])
 }
 
-
 fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
@@ -84,12 +83,10 @@ impl eframe::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.label("Drag-and-drop files onto the window!");
 
-            let path = rfd::FileDialog::new().pick_file();
             if ui.button("Open file…").clicked()
-                && !path.is_none()
+                && let Some(path) = rfd::FileDialog::new().pick_file()
             {
-
-                self.picked_path = Some(path.unwrap().display().to_string());
+                self.picked_path = Some(path.display().to_string());
             }
 
             if let Some(picked_path) = &self.picked_path {
