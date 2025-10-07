@@ -3,6 +3,7 @@ use rand::rng;
 use rand::seq::SliceRandom; // For shuffling the array
 use raqote::*;
 use std::collections::HashMap;
+use std::io::{self, Write};
 
 // #[derive(Default)]
 pub(crate) struct Pallette {
@@ -93,9 +94,14 @@ impl Pallette {
         }
     }
 
-    pub fn save(&mut self, pallette_name: String) {
-        // let i =rand
+    pub fn save_pallette_img(&mut self, pallette_name: String) {
         Self::output_pallette(self.top_colors.clone(), &pallette_name);
+    }
+
+    pub fn save_pallette_text(&mut self, pallette_name: String) {
+        if let Err(e) = Self::output_pallette_txt(self.top_colors.clone(), &pallette_name) {
+            eprintln!("Error writing to file: {}", e);
+        }
     }
 
     pub fn rgb_to_hex(color: Rgb<u8>) -> String {
@@ -134,6 +140,17 @@ impl Pallette {
 
         Some(pix)
     }
+
+    fn output_pallette_txt(colors: Vec<Rgb<u8>>, pal_name: &str) -> io::Result<()> {
+        let strs = colors.iter().map(|c| Self::rgb_to_hex(*c));
+        let output_path = format!("pallettes/{pal_name}.txt");
+        let mut output = std::fs::File::create(&output_path)?;
+        for line in strs {
+            writeln!(output, "{}", line)?;
+        }
+        Ok(())
+    }
+
     fn output_pallette(colors: Vec<Rgb<u8>>, pal_name: &str) {
         println!("Output pallette");
         let square_size = 64.;

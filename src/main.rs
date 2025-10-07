@@ -116,9 +116,13 @@ impl eframe::App for MyApp {
 
                 ui.text_edit_singleline(&mut self.pallette_name);
 
-                if ui.button("Save").clicked() {
+                if ui.button("Save as PNG").clicked() {
                     println!("Save clicked");
-                    self.pallette.save(self.pallette_name.clone())
+                    self.pallette.save_pallette_img(self.pallette_name.clone())
+                }
+                if ui.button("Save as Text").clicked() {
+                    println!("Save clicked");
+                    self.pallette.save_pallette_text(self.pallette_name.clone())
                 }
             }
 
