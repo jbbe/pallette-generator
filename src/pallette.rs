@@ -1,7 +1,8 @@
-use std::collections::HashMap;
-
 use image::{ImageReader, Rgb};
+use rand::rng;
+use rand::seq::SliceRandom; // For shuffling the array
 use raqote::*;
+use std::collections::HashMap;
 
 // #[derive(Default)]
 pub(crate) struct Pallette {
@@ -23,9 +24,6 @@ impl Default for Pallette {
 }
 
 impl Pallette {
-
-    // pub fn new() -> Self {
-    // }
     pub fn update(&mut self, path: &String) {
         if let Some(cur) = &self.current_path {
             // Return early if they are the same
@@ -33,11 +31,6 @@ impl Pallette {
                 return;
             }
         }
-        // if let Some(ref p) = path && let Some(cur) = self.current_path {
-        //     if *cur == *p  {
-        //         return
-        //     }
-        // }
         self.current_path = Some(path.clone());
         let map = Self::extract_pallete(&self.current_path.clone().unwrap()).unwrap();
 
@@ -52,7 +45,16 @@ impl Pallette {
     }
 
     pub fn get_unused_entry(&mut self) -> Option<Rgb<u8>> {
-        for e in self.all_entries.iter() {
+        // Create an array of integers from `start` to `end`
+        let start = 0;
+        let end = self.all_entries.len();
+        let mut array: Vec<usize> = (start..=end).collect();
+
+        // Shuffle the array
+        let mut rng = rng();
+        array.shuffle(&mut rng);
+        for i in array {
+            let e = self.all_entries[i];
             if !self.top_colors.contains(&e.0) {
                 return Some(e.0.clone());
             }

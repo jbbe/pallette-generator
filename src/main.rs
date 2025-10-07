@@ -62,13 +62,7 @@ impl eframe::App for MyApp {
                     self.pallette.pallette_size += 1;
                     self.pallette.update_top_colors();
                 }
-                //     use eframe::egui;
 
-                // Drawing rectangles
-                // let rects = self.pallette.colors.iter().map(|c|{
-                //     egui::Rect::from_min_size(egui::pos2(10.0, 10.0), egui::vec2(50.0, 30.0)),
-                // }).collect();
-                // let mut painter = ui.painter();
                 let num_columns = 3; // Set the desired number of columns
 
                 // Create a grid and add items to it
