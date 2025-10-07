@@ -1,3 +1,6 @@
+#![allow(warnings)]
+
+
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct PColor {
     pub r: u8,

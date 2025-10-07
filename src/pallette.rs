@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use image::{ImageReader, Rgb};
 use raqote::*;
 
-#[derive(Default)]
+// #[derive(Default)]
 pub(crate) struct Pallette {
     pub top_colors: Vec<Rgb<u8>>,
     pub current_path: Option<String>,
@@ -11,8 +11,8 @@ pub(crate) struct Pallette {
     pub pallette_size: usize,
 }
 
-impl Pallette {
-    pub fn new() -> Self {
+impl Default for Pallette {
+    fn default() -> Self {
         Self {
             top_colors: Vec::new(),
             current_path: None,
@@ -20,6 +20,9 @@ impl Pallette {
             pallette_size: 5,
         }
     }
+}
+
+impl Pallette {
 
     // pub fn new() -> Self {
     // }

@@ -59,7 +59,7 @@ impl eframe::App for MyApp {
                     self.pallette.update_top_colors();
                 }
                 if ui.button("+").clicked() {
-                    self.pallette.pallette_size -= 1;
+                    self.pallette.pallette_size += 1;
                     self.pallette.update_top_colors();
                 }
                 //     use eframe::egui;
