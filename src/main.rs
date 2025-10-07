@@ -111,17 +111,24 @@ impl eframe::App for MyApp {
                 //     use eframe::egui;
 
                 // Drawing rectangles
-                let color = egui::Color32::from_rgb(100, 150, 200);
-                let rects = vec![
-                    egui::Rect::from_min_size(egui::pos2(10.0, 10.0), egui::vec2(50.0, 30.0)),
-                    egui::Rect::from_min_size(egui::pos2(70.0, 10.0), egui::vec2(50.0, 30.0)),
-                    egui::Rect::from_min_size(egui::pos2(130.0, 10.0), egui::vec2(50.0, 30.0)),
-                ];
-
+                // let rects = self.pallette.colors.iter().map(|c|{
+                //     egui::Rect::from_min_size(egui::pos2(10.0, 10.0), egui::vec2(50.0, 30.0)),
+                // }).collect();
                 let mut painter = ui.painter();
-                for rect in rects {
+                for i in 0..self.pallette.colors.len() {
+                    let x_offset = 10. * (i as f32) * 60.;
+                    let rect= egui::Rect::from_min_size(egui::pos2(x_offset, 10.0), egui::vec2(x_offset + 40.0, 30.0));
+                    let c = self.pallette.colors[i];
+                    let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
                     painter.rect_filled(rect, 0.0, color);
+
                 }
+                // vec![.
+                //     egui::Rect::from_min_size(egui::pos2(10.0, 10.0), egui::vec2(50.0, 30.0)),
+                //     egui::Rect::from_min_size(egui::pos2(70.0, 10.0), egui::vec2(50.0, 30.0)),
+                //     egui::Rect::from_min_size(egui::pos2(130.0, 10.0), egui::vec2(50.0, 30.0)),
+                // ];
+
             }
 
             // if self.pallette.colors.len() > 0 {
