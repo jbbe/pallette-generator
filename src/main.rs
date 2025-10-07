@@ -53,13 +53,15 @@ impl eframe::App for MyApp {
             }
             if self.display {
                 let p_size = self.pallette.pallette_size;
-                ui.label(format!("Pallette Size: {p_size}"));
-                if ui.button("-").clicked() {
-                    self.pallette.decrement_pallette_size();
-                }
-                if ui.button("+").clicked() {
-                    self.pallette.increment_pallette_size();
-                }
+                ui.horizontal(|ui| {
+                    ui.label(format!("Pallette Size: {p_size}"));
+                    if ui.button("-").clicked() {
+                        self.pallette.decrement_pallette_size();
+                    }
+                    if ui.button("+").clicked() {
+                        self.pallette.increment_pallette_size();
+                    }
+                });
 
                 let num_columns = 4; // Set the desired number of columns
                 let pallette_button_size = egui::vec2(100., 100.);
@@ -71,7 +73,8 @@ impl eframe::App for MyApp {
                                 let c = self.pallette.top_colors[i];
                                 let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
                                 if ui
-                                    .add_sized(pallette_button_size,
+                                    .add_sized(
+                                        pallette_button_size,
                                         egui::Button::new(egui::RichText::new("Copy"))
                                             .fill(color)
                                             .sense(egui::Sense::click()),
@@ -117,6 +120,10 @@ impl eframe::App for MyApp {
                         } else {
                             "???".to_owned()
                         };
+                        if ui.button(format!("Extract Pallette from {info}")).clicked() {
+                            self.pallette.update(&info);
+                            self.display = true
+                        }
 
                         let mut additional_info = vec![];
                         if !file.mime.is_empty() {
@@ -145,7 +152,6 @@ impl eframe::App for MyApp {
         });
     }
 }
-
 
 /// Preview hovering files:
 fn preview_files_being_dropped(ctx: &egui::Context) {
