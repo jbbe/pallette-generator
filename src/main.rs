@@ -4,6 +4,8 @@ use eframe::egui;
 
 mod color;
 mod pallette;
+use egui::ColorImage;
+use image::{DynamicImage, RgbaImage};
 use pallette::Pallette;
 
 fn main() -> eframe::Result {
@@ -28,6 +30,7 @@ struct MyApp {
     pallette: Pallette,
     display: bool,
     pallette_name: String,
+    texture_id: Option<egui::TextureHandle>,
 }
 
 impl eframe::App for MyApp {
@@ -47,8 +50,14 @@ impl eframe::App for MyApp {
                     ui.monospace(picked_path);
                 });
                 if ui.button("Extract Pallette").clicked() {
-                    self.pallette.update(picked_path);
-                    self.display = true
+                    // handle_extract_click(picked_path);
+                    self.pallette.update(&picked_path);
+                    self.display = true;
+                    if let Ok(img) = load_image(&picked_path) {
+                        let color_image = convert_img_for_display(img);
+                        self.texture_id =
+                            Some(ctx.load_texture("my_image", color_image, Default::default()));
+                    }
                 }
             }
             if self.display {
@@ -67,6 +76,12 @@ impl eframe::App for MyApp {
                 let pallette_button_size = egui::vec2(100., 100.);
                 // Create a grid and add items to it
                 ui.horizontal(|ui| {
+                    if let Some(texture_id) = &self.texture_id {
+                        let desired_size = egui::vec2(300.0, 200.0);
+                        ui.add(egui::Image::new(texture_id).fit_to_exact_size(desired_size));
+                    } else {
+                        ui.label("Loading image...");
+                    }
                     ui.group(|ui| {
                         egui::Grid::new("my_grid").show(ui, |ui| {
                             for i in 0..self.pallette.top_colors.len() {
@@ -121,8 +136,17 @@ impl eframe::App for MyApp {
                             "???".to_owned()
                         };
                         if ui.button(format!("Extract Pallette from {info}")).clicked() {
+                            // handle_extract_click(&info)
                             self.pallette.update(&info);
-                            self.display = true
+                            self.display = true;
+                            if let Ok(img) = load_image(&info) {
+                                let color_image = convert_img_for_display(img);
+                                self.texture_id = Some(ctx.load_texture(
+                                    "my_image",
+                                    color_image,
+                                    Default::default(),
+                                ));
+                            }
                         }
 
                         let mut additional_info = vec![];
@@ -151,6 +175,21 @@ impl eframe::App for MyApp {
             }
         });
     }
+}
+
+// Function to load an image and return it as an Rgba image
+fn load_image(path: &str) -> Result<DynamicImage, Box<dyn std::error::Error>> {
+    let img = image::open(std::path::Path::new(path))?;
+    Ok(img)
+}
+
+fn convert_img_for_display(img: DynamicImage) -> ColorImage {
+    let rgba_image: RgbaImage = img.to_rgba8();
+    let color_image = ColorImage::from_rgba_unmultiplied(
+        [rgba_image.width() as usize, rgba_image.height() as usize],
+        rgba_image.as_raw(),
+    );
+    return color_image;
 }
 
 /// Preview hovering files:
