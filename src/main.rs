@@ -1,9 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 #![allow(rustdoc::missing_crate_level_docs)] // it's an example
+use eframe::egui;
 use image::{ImageReader, Rgb};
 use raqote::*;
-use std::{collections::HashMap, env, fs};
-use eframe::egui;
+use std::collections::HashMap;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct PColor {
@@ -13,7 +13,7 @@ pub struct PColor {
 }
 
 // fn color_dist(a: Rgb<u8>, b: Rgb<u8>) -> u32 {
-    
+
 // }
 
 impl PColor {
@@ -37,14 +37,13 @@ impl PColor {
             // frequency: 0,
         }
     }
-
 }
 
 // impl Eq for PColor {
 //     fn eq(&self, other: &Self) -> bool {
 //         self.r == other.r && self.g == other.g && self.b == other.b
 //     }
-// }  
+// }
 
 // fn rgb_eq(p_color: &PColor, rgb: &Rgb<u8>) -> bool {
 //     p_color.r == rgb[0] && p_color.g == rgb[1] && p_color.b == rgb[2]
@@ -76,6 +75,7 @@ fn main() -> eframe::Result {
 struct MyApp {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
+    pallette: Pallette,
 }
 
 impl eframe::App for MyApp {
@@ -94,6 +94,10 @@ impl eframe::App for MyApp {
                     ui.label("Picked file:");
                     ui.monospace(picked_path);
                 });
+                // if let Some(p) = &self.pallette {
+                self.pallette.update(picked_path);
+                // }
+                // ui.vertical(ui.)
             }
 
             // Show dropped files (if any):
@@ -136,6 +140,76 @@ impl eframe::App for MyApp {
             }
         });
     }
+}
+
+#[derive(Default)]
+struct Pallette {
+    colors: Vec<(Rgb<u8>, usize)>,
+    current_path: Option<String>,
+}
+
+impl Pallette {
+    pub fn new() -> Self {
+        Self {
+            colors: Vec::new(),
+            current_path: None,
+        }
+    }
+    pub fn update(&mut self, path: &String) {
+        if let (Some(cur)) = (&self.current_path) {
+            // Return early if they are the same
+            if cur == path {
+                return;
+            }
+        }
+        // if let Some(ref p) = path && let Some(cur) = self.current_path {
+        //     if *cur == *p  {
+        //         return
+        //     }
+        // }
+        self.current_path = Some(path.clone());
+        let map = extract_pallete(&self.current_path.clone().unwrap()).unwrap();
+
+        // let full_pallette = extract_pallete(pal_name, &file_path).unwrap();
+
+        let top_colors = get_top_colors(map, 50);
+        // let top_colors = reduce_pallette(full_pallette, 10);
+        output_pallette(top_colors, "first");
+        // if let Some(m) = map {
+
+            // self.colors = Self::get_top_colors(map.unwrap(), top_n)
+            // m.iter().collect();
+            // }
+            // update_colors()
+        // }
+    }
+}
+fn get_top_colors(pallette: HashMap<Rgb<u8>, usize>, top_n: usize) -> Vec<Rgb<u8>> {
+    let mut entries: Vec<(&Rgb<u8>, &usize)> = pallette.iter().collect();
+
+    // Sort by the count in descending order
+    entries.sort_by(|a, b| b.1.cmp(a.1));
+
+    // Take the top N entries
+    entries
+        .into_iter()
+        .map(|e| e.0)
+        .take(top_n)
+        .cloned()
+        .collect()
+}
+
+fn extract_pallete(path: &str) -> Option<HashMap<Rgb<u8>, usize>> {
+    println!("Extracting Pallette from {path} ");
+    let img = ImageReader::open(path).unwrap().decode().unwrap();
+    let rgb = img.to_rgb8();
+    // let mut pixels = Vec::<PColor>::new();
+    let mut pix = HashMap::<Rgb<u8>, usize>::new();
+    for pixel in rgb.pixels() {
+        *pix.entry(*pixel).or_insert(0) += 1
+    }
+
+    Some(pix)
 }
 
 /// Preview hovering files:
@@ -204,28 +278,6 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
 // }
 
 // #region core
-fn get_top_colors(pallette: HashMap<Rgb<u8>, usize>, top_n: usize) -> Vec<Rgb<u8>> {
-     let mut entries: Vec<(&Rgb<u8>, &usize)> = pallette.iter().collect();
-
-    // Sort by the count in descending order
-    entries.sort_by(|a, b| b.1.cmp(a.1));
-
-    // Take the top N entries
-    entries.into_iter().map(|e| { e.0 }).take(top_n).cloned().collect() 
-}
-
-fn extract_pallete(pal_name: &str, path: &str) -> Option<HashMap<Rgb<u8>, usize>> {
-    println!("Extracting Pallette from {pal_name} ");
-    let img = ImageReader::open(path).unwrap().decode().unwrap();
-    let rgb = img.to_rgb8();
-    // let mut pixels = Vec::<PColor>::new();
-    let mut pix = HashMap::<Rgb<u8>, usize>::new();
-    for pixel in rgb.pixels() {
-        *pix.entry(*pixel).or_insert(0) += 1
-    }
-
-    Some(pix)
-}
 
 fn output_pallette(colors: Vec<Rgb<u8>>, pal_name: &str) {
     let square_size = 64.;
@@ -270,4 +322,3 @@ fn output_pallette(colors: Vec<Rgb<u8>>, pal_name: &str) {
     }
     let _ = dt.write_png(format!("pallettes/{pal_name}.png"));
 }
-
