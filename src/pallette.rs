@@ -44,8 +44,8 @@ impl Pallette {
     }
 
     pub fn update_top_colors(&mut self) {
-        let top_colors = Self::get_top_colors(self.all_entries.clone(), self.pallette_size);
-        self.top_colors = top_colors;
+        self.top_colors = Self::get_top_colors(self.all_entries.clone(), self.pallette_size);
+        self.pallette_size = self.top_colors.len();
     }
 
     pub fn get_unused_entry(&mut self) -> Option<Rgb<u8>> {
@@ -124,13 +124,31 @@ impl Pallette {
     }
 
     pub fn get_top_colors(entries: Vec<(Rgb<u8>, usize)>, top_n: usize) -> Vec<Rgb<u8>> {
+        let mut res = Vec::new();
+        for e in entries {
+            let mut should_add = true;
+            if res.len() >= top_n {
+                break;
+            }
+            for c in &res {
+                if Self::color_distance(e.0, *c) < 20. {
+                    should_add = false;
+                    break;
+                }
+            }
+            if should_add {
+                res.push(e.0);
+            }
+        }
+
+        res
         // Take the top N entries
-        entries
-            .into_iter()
-            .map(|e| e.0)
-            .take(top_n)
-            // .cloned()
-            .collect()
+        // entries
+        //     .into_iter()
+        //     .map(|e| e.0)
+        //     .take(top_n)
+        //     // .cloned()
+        //     .collect()
     }
 
     pub fn extract_pallete(path: &str) -> Option<HashMap<Rgb<u8>, usize>> {
@@ -201,5 +219,22 @@ impl Pallette {
             }
         }
         let _ = dt.write_png(format!("pallettes/{pal_name}.png"));
+    }
+
+    fn color_distance(c1: Rgb<u8>, c2: Rgb<u8>) -> f32 {
+        let ap_r = 0.5 * ((c1[0] as f32 + c2[0] as f32));
+        let dr = Self::component_diff(c1, c2, 0);
+        let dg = Self::component_diff(c1, c2, 1);
+        let db = Self::component_diff(c1, c2, 2);
+
+        let dc_sq = (2. + (ap_r / 256.)) * (dr * dr)
+            + 4. * (dg * dg)
+            + (2. + ((256. - ap_r) / 256.)) * (db * db);
+
+        f32::sqrt(dc_sq)
+    }
+
+    fn component_diff(c1: Rgb<u8>, c2: Rgb<u8>, component: usize) -> f32 {
+        (c1[component] as f32) - (c2[component] as f32)
     }
 }
