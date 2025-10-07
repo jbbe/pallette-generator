@@ -1,60 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 #![allow(rustdoc::missing_crate_level_docs)] // it's an example
 use eframe::egui;
-use image::{ImageReader, Rgb};
-use raqote::*;
-use std::collections::HashMap;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
-pub struct PColor {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-}
-
-// fn color_dist(a: Rgb<u8>, b: Rgb<u8>) -> u32 {
-
-// }
-
-impl PColor {
-    pub fn from_string(color: String) -> Self {
-        let r_in = u8::from_str_radix(&color[1..3], 16).unwrap();
-        let g_in = u8::from_str_radix(&color[3..5], 16).unwrap();
-        let b_in = u8::from_str_radix(&color[5..7], 16).unwrap();
-        // println!("color {r_in}, {g_in}, {b_in}");
-        return Self {
-            r: r_in,
-            g: g_in,
-            b: b_in,
-            // frequency: 0,
-        };
-    }
-    pub fn new(r_in: u8, g_in: u8, b_in: u8) -> Self {
-        Self {
-            r: r_in,
-            g: g_in,
-            b: b_in,
-            // frequency: 0,
-        }
-    }
-}
-
-// impl Eq for PColor {
-//     fn eq(&self, other: &Self) -> bool {
-//         self.r == other.r && self.g == other.g && self.b == other.b
-//     }
-// }
-
-// fn rgb_eq(p_color: &PColor, rgb: &Rgb<u8>) -> bool {
-//     p_color.r == rgb[0] && p_color.g == rgb[1] && p_color.b == rgb[2]
-// }
-
-// fn rgb_from_str(color: &str) -> Rgb<u8> {
-//     let r_in = u8::from_str_radix(&color[1..3], 16).unwrap();
-//     let g_in = u8::from_str_radix(&color[3..5], 16).unwrap();
-//     let b_in = u8::from_str_radix(&color[5..7], 16).unwrap();
-//     Rgb([r_in, g_in, b_in])
-// }
+mod color;
+mod pallette;
+use pallette::Pallette;
 
 fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -102,6 +52,16 @@ impl eframe::App for MyApp {
                 }
             }
             if self.display {
+                let p_size = self.pallette.pallette_size;
+                ui.label(format!("Pallette Size: {p_size}"));
+                if ui.button("-").clicked() {
+                    self.pallette.pallette_size -= 1;
+                    self.pallette.update_top_colors();
+                }
+                if ui.button("+").clicked() {
+                    self.pallette.pallette_size -= 1;
+                    self.pallette.update_top_colors();
+                }
                 //     use eframe::egui;
 
                 // Drawing rectangles
@@ -116,11 +76,8 @@ impl eframe::App for MyApp {
                     ui.group(|ui| {
                         egui::Grid::new("my_grid").show(ui, |ui| {
                             for i in 0..self.pallette.top_colors.len() {
-                                // let x_offset = 10. * (i as f32) * 60.;
-                                // let rect= egui::Rect::from_min_size(egui::pos2(x_offset, 10.0), egui::vec2(40.0, 30.0));
                                 let c = self.pallette.top_colors[i];
                                 let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
-                                // painter.rect_filled(rect, 0.0, color);
                                 if ui
                                     .add(
                                         egui::Button::new(egui::RichText::new("Copy"))
@@ -129,11 +86,9 @@ impl eframe::App for MyApp {
                                     )
                                     .clicked()
                                 {
-                                    let hex = rgb_to_hex(c);
+                                    let hex = Pallette::rgb_to_hex(c);
                                     println!("Copy {hex}");
-                                    // ui.output().copied_text = hex.to_owned();
-                                        // ui.output_mut(|o| o.copied_text = hex.to_owned());
-                                        ctx.copy_text(hex.to_owned());
+                                    ctx.copy_text(hex.to_owned());
                                 }
                                 if ui
                                     .add(egui::Button::new(egui::RichText::new("Swap")))
@@ -207,101 +162,6 @@ impl eframe::App for MyApp {
     // }
 }
 
-#[derive(Default)]
-struct Pallette {
-    top_colors: Vec<Rgb<u8>>,
-    current_path: Option<String>,
-    all_entries: Vec<(Rgb<u8>, usize)>,
-}
-
-impl Pallette {
-    // pub fn new() -> Self {
-    //     Self {
-    //         colors: Vec::new(),
-    //         current_path: None,
-    //     }
-    // }
-    pub fn update(&mut self, path: &String) {
-        if let Some(cur) = &self.current_path {
-            // Return early if they are the same
-            if cur == path {
-                return;
-            }
-        }
-        // if let Some(ref p) = path && let Some(cur) = self.current_path {
-        //     if *cur == *p  {
-        //         return
-        //     }
-        // }
-        self.current_path = Some(path.clone());
-        let map = extract_pallete(&self.current_path.clone().unwrap()).unwrap();
-
-        // let full_pallette = extract_pallete(pal_name, &file_path).unwrap();
-        let entries = get_sorted_entries(map);
-        let top_colors = get_top_colors(entries, 50);
-        self.top_colors = top_colors;
-    }
-
-    pub fn get_unused_entry(&mut self) -> Option<Rgb<u8>> {
-        for e in self.all_entries.iter() {
-            if !self.top_colors.contains(&e.0) {
-                return Some(e.0.clone());
-            }
-        }
-        None
-    }
-
-    fn swap_top_color(&mut self, idx: usize) {
-        let e = self.get_unused_entry();
-        match e {
-            Some(c) => self.top_colors[idx] = c,
-            None => (),
-        }
-        // self.top_colors[idx] =
-    }
-
-    pub fn save(&mut self, pallette_name: String) {
-        // let i =rand
-        output_pallette(self.top_colors.clone(), &pallette_name);
-    }
-}
-
-fn rgb_to_hex(color: Rgb<u8>) -> String {
-    format!("#{:02X}{:02X}{:02X}", color[0], color[1], color[2])
-}
-
-fn get_sorted_entries(pallette: HashMap<Rgb<u8>, usize>) -> Vec<(Rgb<u8>, usize)> {
-    let mut entries: Vec<(Rgb<u8>, usize)> = pallette.into_iter().collect();
-
-    // Sort by the count in descending order
-    entries.sort_by(|a, b| b.1.cmp(&a.1));
-    entries
-}
-
-fn get_top_colors(entries: Vec<(Rgb<u8>, usize)>, top_n: usize) -> Vec<Rgb<u8>> {
-    // Take the top N entries
-    entries
-        .into_iter()
-        .map(|e| e.0)
-        .take(top_n)
-        // .cloned()
-        .collect()
-}
-
-fn extract_pallete(path: &str) -> Option<HashMap<Rgb<u8>, usize>> {
-    println!("Extracting Pallette from {path} ");
-    let img = ImageReader::open(path).unwrap().decode().unwrap();
-    let rgb = img.to_rgb8();
-    // let mut pixels = Vec::<PColor>::new();
-    let mut pix = HashMap::<Rgb<u8>, usize>::new();
-    for pixel in rgb.pixels() {
-        *pix.entry(*pixel).or_insert(0) += 1
-    }
-
-    println!("Pallette extracted");
-
-    Some(pix)
-}
 
 /// Preview hovering files:
 fn preview_files_being_dropped(ctx: &egui::Context) {
@@ -369,48 +229,3 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
 // }
 
 // #region core
-
-fn output_pallette(colors: Vec<Rgb<u8>>, pal_name: &str) {
-    println!("Output pallette");
-    let square_size = 64.;
-    let margin = 16.;
-    let width = 512;
-    let height = ((margin + square_size) * ((colors.len() as f32) / 5.) + margin) as i32;
-
-    let mut dt = DrawTarget::new(width, height);
-
-    let mut pb = PathBuilder::new();
-    // pb.move_to(current_x, current_y);
-    pb.rect(0., 0., width as f32, height as f32);
-    pb.close();
-    let path = pb.finish();
-    // let solid = SolidSource::from_unpremultiplied_argb(0xff, 0, 0, 0);
-    let solid = SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0xff, 0xff);
-    dt.fill(&path, &&Source::Solid(solid), &DrawOptions::new());
-
-    let mut current_x = 0.;
-    let mut current_y = margin;
-    let col_count = 5;
-    let mut current_col = 0;
-
-    for color in colors {
-        // println!("Draw color: {color}");
-        current_x += margin;
-        let mut pb = PathBuilder::new();
-        // pb.move_to(current_x, current_y);
-        pb.rect(current_x, current_y, square_size, square_size);
-        pb.close();
-        let path = pb.finish();
-        let solid = SolidSource::from_unpremultiplied_argb(0xff, color[0], color[1], color[2]);
-        dt.fill(&path, &&Source::Solid(solid), &DrawOptions::new());
-        current_col += 1;
-        if current_col > col_count {
-            current_col = 0;
-            current_x = 0.;
-            current_y += square_size + margin;
-        } else {
-            current_x += square_size;
-        }
-    }
-    let _ = dt.write_png(format!("pallettes/{pal_name}.png"));
-}
