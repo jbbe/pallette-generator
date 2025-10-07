@@ -10,7 +10,7 @@ fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([640.0, 240.0]) // wide enough for the drag-drop overlay text
+            .with_inner_size([1240.0, 840.0]) // wide enough for the drag-drop overlay text
             .with_drag_and_drop(true),
         ..Default::default()
     };
@@ -55,16 +55,14 @@ impl eframe::App for MyApp {
                 let p_size = self.pallette.pallette_size;
                 ui.label(format!("Pallette Size: {p_size}"));
                 if ui.button("-").clicked() {
-                    self.pallette.pallette_size -= 1;
-                    self.pallette.update_top_colors();
+                    self.pallette.decrement_pallette_size();
                 }
                 if ui.button("+").clicked() {
-                    self.pallette.pallette_size += 1;
-                    self.pallette.update_top_colors();
+                    self.pallette.increment_pallette_size();
                 }
 
-                let num_columns = 3; // Set the desired number of columns
-
+                let num_columns = 4; // Set the desired number of columns
+                let pallette_button_size = egui::vec2(100., 100.);
                 // Create a grid and add items to it
                 ui.horizontal(|ui| {
                     ui.group(|ui| {
@@ -73,7 +71,7 @@ impl eframe::App for MyApp {
                                 let c = self.pallette.top_colors[i];
                                 let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
                                 if ui
-                                    .add(
+                                    .add_sized(pallette_button_size,
                                         egui::Button::new(egui::RichText::new("Copy"))
                                             .fill(color)
                                             .sense(egui::Sense::click()),
@@ -97,11 +95,7 @@ impl eframe::App for MyApp {
                         });
                     });
                 });
-                // vec![.
-                //     egui::Rect::from_min_size(egui::pos2(10.0, 10.0), egui::vec2(50.0, 30.0)),
-                //     egui::Rect::from_min_size(egui::pos2(70.0, 10.0), egui::vec2(50.0, 30.0)),
-                //     egui::Rect::from_min_size(egui::pos2(130.0, 10.0), egui::vec2(50.0, 30.0)),
-                // ];
+
                 ui.text_edit_singleline(&mut self.pallette_name);
 
                 if ui.button("Save").clicked() {
@@ -150,10 +144,6 @@ impl eframe::App for MyApp {
             }
         });
     }
-
-    // fn color_square(&mut self, idx: usize) {
-
-    // }
 }
 
 

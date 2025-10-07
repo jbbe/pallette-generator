@@ -18,7 +18,7 @@ impl Default for Pallette {
             top_colors: Vec::new(),
             current_path: None,
             all_entries: Vec::new(),
-            pallette_size: 5,
+            pallette_size: 16,
         }
     }
 }
@@ -36,6 +36,9 @@ impl Pallette {
 
         // let full_pallette = extract_pallete(pal_name, &file_path).unwrap();
         self.all_entries = Self::get_sorted_entries(map);
+        if self.all_entries.len() < self.pallette_size {
+            self.pallette_size = self.all_entries.len()
+        }
         self.update_top_colors();
     }
 
@@ -47,7 +50,11 @@ impl Pallette {
     pub fn get_unused_entry(&mut self) -> Option<Rgb<u8>> {
         // Create an array of integers from `start` to `end`
         let start = 0;
-        let end = self.all_entries.len();
+        let end = if self.all_entries.len() > 0 {
+            self.all_entries.len() - 1
+        } else {
+            0
+        };
         let mut array: Vec<usize> = (start..=end).collect();
 
         // Shuffle the array
@@ -70,7 +77,20 @@ impl Pallette {
             Some(c) => self.top_colors[idx] = c,
             None => (),
         }
-        // self.top_colors[idx] =
+    }
+
+    pub fn decrement_pallette_size(&mut self) {
+        if self.pallette_size > 1 {
+            self.pallette_size -= 1;
+            self.update_top_colors();
+        }
+    }
+
+    pub fn increment_pallette_size(&mut self) {
+        if self.pallette_size < self.all_entries.len() {
+            self.pallette_size += 1;
+            self.update_top_colors();
+        }
     }
 
     pub fn save(&mut self, pallette_name: String) {
