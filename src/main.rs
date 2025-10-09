@@ -45,104 +45,16 @@ impl eframe::App for MyApp {
                     ui.set_min_size(egui::Vec2::new(500., 700.));
 
                     ui.vertical(|ui| {
-                        if let Some(picked_path) = &self.picked_path {
-                            if let Ok(img) = load_image(&picked_path) {
-                                let color_image = convert_img_for_display(img);
-                                self.texture_id = Some(ctx.load_texture(
-                                    "my_image",
-                                    color_image,
-                                    Default::default(),
-                                ));
-                            }
-                            ui.horizontal(|ui| {
-                                ui.label("Picked file:");
-                                ui.monospace(picked_path);
-                            });
-                            if ui.button("Extract Pallette").clicked() {
-                                self.pallette.update(&picked_path);
-                                self.pallette_display = true;
-                                self.img_display = true;
-                            }
-                        } else {
-                            ui.label("Drag-and-drop files onto the window!");
-
-                            if ui.button("Open file…").clicked()
-                                && let Some(path) = rfd::FileDialog::new().pick_file()
-                            {
-                                self.picked_path = Some(path.display().to_string());
-                                self.img_display = true;
-                            }
-                        }
+                        file_picker(ui, self, ctx);
                         if self.pallette_display {
-                            let p_size = self.pallette.pallette_size;
-                            ui.horizontal(|ui| {
-                                ui.label(format!("Pallette Size: {p_size}"));
-                                if ui.button("-").clicked() {
-                                    self.pallette.decrement_pallette_size();
-                                }
-                                if ui.button("+").clicked() {
-                                    self.pallette.increment_pallette_size();
-                                }
-                            });
-
+                            pallette_control_buttons(ui, self);
                             pallette_panel(ui, self, ctx);
                             ui.text_edit_singleline(&mut self.pallette_name);
 
-                            if ui.button("Save as PNG").clicked() {
-                                println!("Save clicked");
-                                self.pallette.save_pallette_img(self.pallette_name.clone())
-                            }
-                            if ui.button("Save as Text").clicked() {
-                                println!("Save clicked");
-                                self.pallette.save_pallette_text(self.pallette_name.clone())
-                            }
-
-                            if ui.button("Reset").clicked() {
-                                println!("reset");
-                                self.pallette.reset();
-                                self.picked_path = None;
-                                self.pallette_display = false;
-                                self.img_display = false;
-                                self.texture_id = None;
-                                self.dropped_files = Vec::new();
-                            }
+                            save_buttons(ui, self);
+                            reset_button(ui, self);
                         }
-
-                        // Show dropped files (if any):
-                        if !self.dropped_files.is_empty() {
-                            ui.group(|ui| {
-                                ui.label("Dropped files:");
-
-                                for file in &self.dropped_files {
-                                    let mut info = if let Some(path) = &file.path {
-                                        path.display().to_string()
-                                    } else if !file.name.is_empty() {
-                                        file.name.clone()
-                                    } else {
-                                        "???".to_owned()
-                                    };
-                                    if ui.button(format!("Extract Pallette from {info}")).clicked()
-                                    {
-                                        // handle_extract_click(&info)
-                                        self.pallette.update(&info);
-                                        self.pallette_display = true;
-                                    }
-
-                                    let mut additional_info = vec![];
-                                    if !file.mime.is_empty() {
-                                        additional_info.push(format!("type: {}", file.mime));
-                                    }
-                                    if let Some(bytes) = &file.bytes {
-                                        additional_info.push(format!("{} bytes", bytes.len()));
-                                    }
-                                    if !additional_info.is_empty() {
-                                        info += &format!(" ({})", additional_info.join(", "));
-                                    }
-
-                                    ui.label(info);
-                                }
-                            });
-                        }
+                        file_drop(ui, self);
                     });
                 });
                 image_panel(ui, self);
@@ -201,6 +113,106 @@ fn pallette_panel(ui: &mut egui::Ui, app: &mut MyApp, ctx: &egui::Context) {
             });
         })
     });
+}
+
+fn pallette_control_buttons(ui: &mut egui::Ui, app: &mut MyApp) {
+    let p_size = app.pallette.pallette_size;
+    ui.horizontal(|ui| {
+        ui.label(format!("Pallette Size: {p_size}"));
+        if ui.button("-").clicked() {
+            app.pallette.decrement_pallette_size();
+        }
+        if ui.button("+").clicked() {
+            app.pallette.increment_pallette_size();
+        }
+    });
+}
+
+fn save_buttons(ui: &mut egui::Ui, app: &mut MyApp) {
+    if ui.button("Save as PNG").clicked() {
+        println!("Save clicked");
+        app.pallette.save_pallette_img(app.pallette_name.clone())
+    }
+    if ui.button("Save as Text").clicked() {
+        println!("Save clicked");
+        app.pallette.save_pallette_text(app.pallette_name.clone())
+    }
+}
+
+fn reset_button(ui: &mut egui::Ui, app: &mut MyApp) {
+    if ui.button("Reset").clicked() {
+        println!("reset");
+        app.pallette.reset();
+        app.picked_path = None;
+        app.pallette_display = false;
+        app.img_display = false;
+        app.texture_id = None;
+        app.dropped_files = Vec::new();
+    }
+}
+
+fn file_picker(ui: &mut egui::Ui, app: &mut MyApp, ctx: &egui::Context) {
+    if let Some(picked_path) = &app.picked_path {
+        if let Ok(img) = load_image(&picked_path) {
+            let color_image = convert_img_for_display(img);
+            app.texture_id = Some(ctx.load_texture("my_image", color_image, Default::default()));
+        }
+        ui.horizontal(|ui| {
+            ui.label("Picked file:");
+            ui.monospace(picked_path);
+        });
+        if ui.button("Extract Pallette").clicked() {
+            app.pallette.update(&picked_path);
+            app.pallette_display = true;
+            app.img_display = true;
+        }
+    } else {
+        ui.label("Drag-and-drop files onto the window!");
+
+        if ui.button("Open file…").clicked()
+            && let Some(path) = rfd::FileDialog::new().pick_file()
+        {
+            app.picked_path = Some(path.display().to_string());
+            app.img_display = true;
+        }
+    }
+}
+
+fn file_drop(ui: &mut egui::Ui, app: &mut MyApp) {
+    // Show dropped files (if any):
+    if !app.dropped_files.is_empty() {
+        ui.group(|ui| {
+            ui.label("Dropped files:");
+
+            for file in &app.dropped_files {
+                let mut info = if let Some(path) = &file.path {
+                    path.display().to_string()
+                } else if !file.name.is_empty() {
+                    file.name.clone()
+                } else {
+                    "???".to_owned()
+                };
+                if ui.button(format!("Extract Pallette from {info}")).clicked() {
+                    // handle_extract_click(&info)
+                    app.pallette.update(&info);
+                    app.pallette_display = true;
+                }
+
+                let mut additional_info = vec![];
+                if !file.mime.is_empty() {
+                    additional_info.push(format!("type: {}", file.mime));
+                }
+                if let Some(bytes) = &file.bytes {
+                    additional_info.push(format!("{} bytes", bytes.len()));
+                }
+                if !additional_info.is_empty() {
+                    info += &format!(" ({})", additional_info.join(", "));
+                }
+
+                ui.label(info);
+            }
+        });
+    }
 }
 
 fn image_panel(ui: &mut egui::Ui, app: &MyApp) {
