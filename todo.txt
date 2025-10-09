@@ -1,4 +1,8 @@
 Remove highly similar colors from top pick
+remove colors and replace with next top match
+highlight on image on color hover
+
+done
+
 gui
 drag and drop
-remove colors and replace with next top match

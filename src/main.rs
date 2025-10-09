@@ -19,7 +19,10 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "Native file dialogs and drag-and-drop files",
         options,
-        Box::new(|_cc| Ok(Box::<MyApp>::default())),
+        Box::new(|cc| {
+            egui_extras::install_image_loaders(&cc.egui_ctx);
+            Ok(Box::<MyApp>::default())
+        }),
     )
 }
 
@@ -28,7 +31,8 @@ struct MyApp {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
     pallette: Pallette,
-    display: bool,
+    img_display: bool,
+    pallette_display: bool,
     pallette_name: String,
     texture_id: Option<egui::TextureHandle>,
 }
@@ -36,122 +40,13 @@ struct MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label("Drag-and-drop files onto the window!");
-
-            if ui.button("Open file…").clicked()
-                && let Some(path) = rfd::FileDialog::new().pick_file()
-            {
-                self.picked_path = Some(path.display().to_string());
-            }
-
-            if let Some(picked_path) = &self.picked_path {
-                ui.horizontal(|ui| {
-                    ui.label("Picked file:");
-                    ui.monospace(picked_path);
-                });
-                if ui.button("Extract Pallette").clicked() {
-                    self.pallette.update(&picked_path);
-                    self.display = true;
-                    if let Ok(img) = load_image(&picked_path) {
-                        let color_image = convert_img_for_display(img);
-                        self.texture_id =
-                            Some(ctx.load_texture("my_image", color_image, Default::default()));
-                    }
-                }
-            }
-            if self.display {
-                let p_size = self.pallette.pallette_size;
-                ui.horizontal(|ui| {
-                    ui.label(format!("Pallette Size: {p_size}"));
-                    if ui.button("-").clicked() {
-                        self.pallette.decrement_pallette_size();
-                    }
-                    if ui.button("+").clicked() {
-                        self.pallette.increment_pallette_size();
-                    }
-                });
-
-                let pallette_button_size = egui::vec2(100., 100.);
-                // Create a grid and add items to it
-                ui.horizontal(|ui| {
-                    if let Some(texture_id) = &self.texture_id {
-                        let desired_size = egui::vec2(400.0, 500.0);
-                        ui.add(egui::Image::new(texture_id).fit_to_exact_size(desired_size));
-                    } else {
-                        ui.label("Loading image...");
-                    }
-                    let num_columns = 4; // Set the desired number of columns
-                    ui.group(|ui| {
-                        egui::Grid::new("my_grid").show(ui, |ui| {
-                            for i in 0..self.pallette.top_colors.len() {
-                                let c = self.pallette.top_colors[i];
-                                let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
-                                if ui
-                                    .add_sized(
-                                        pallette_button_size,
-                                        egui::Button::new(egui::RichText::new("Copy"))
-                                            .fill(color)
-                                            .sense(egui::Sense::click()),
-                                    )
-                                    .clicked()
-                                {
-                                    let hex = Pallette::rgb_to_hex(c);
-                                    println!("Copy {hex}");
-                                    ctx.copy_text(hex.to_owned());
-                                }
-                                if ui
-                                    .add(egui::Button::new(egui::RichText::new("Swap")))
-                                    .clicked()
-                                {
-                                    self.pallette.swap_top_color(i);
-                                }
-                                if (i + 1) % num_columns == 0 {
-                                    ui.end_row(); // End the row after the specified number of columns
-                                }
-                            }
-                        });
-                    });
-                });
-
-                ui.text_edit_singleline(&mut self.pallette_name);
-
-                if ui.button("Save as PNG").clicked() {
-                    println!("Save clicked");
-                    self.pallette.save_pallette_img(self.pallette_name.clone())
-                }
-                if ui.button("Save as Text").clicked() {
-                    println!("Save clicked");
-                    self.pallette.save_pallette_text(self.pallette_name.clone())
-                }
-
-                if ui.button("Reset").clicked() {
-                    println!("reset");
-                    self.pallette.reset();
-                    self.picked_path = None;
-                    self.display = false;
-                    self.texture_id = None;
-                    self.dropped_files = Vec::new();
-                }
-            }
-
-            // Show dropped files (if any):
-            if !self.dropped_files.is_empty() {
+            ui.horizontal(|ui| {
                 ui.group(|ui| {
-                    ui.label("Dropped files:");
+                    ui.set_min_size(egui::Vec2::new(500., 700.));
 
-                    for file in &self.dropped_files {
-                        let mut info = if let Some(path) = &file.path {
-                            path.display().to_string()
-                        } else if !file.name.is_empty() {
-                            file.name.clone()
-                        } else {
-                            "???".to_owned()
-                        };
-                        if ui.button(format!("Extract Pallette from {info}")).clicked() {
-                            // handle_extract_click(&info)
-                            self.pallette.update(&info);
-                            self.display = true;
-                            if let Ok(img) = load_image(&info) {
+                    ui.vertical(|ui| {
+                        if let Some(picked_path) = &self.picked_path {
+                            if let Ok(img) = load_image(&picked_path) {
                                 let color_image = convert_img_for_display(img);
                                 self.texture_id = Some(ctx.load_texture(
                                     "my_image",
@@ -159,23 +54,142 @@ impl eframe::App for MyApp {
                                     Default::default(),
                                 ));
                             }
+                            ui.horizontal(|ui| {
+                                ui.label("Picked file:");
+                                ui.monospace(picked_path);
+                            });
+                            if ui.button("Extract Pallette").clicked() {
+                                self.pallette.update(&picked_path);
+                                self.pallette_display = true;
+                                self.img_display = true;
+                            }
+                        } else {
+                            ui.label("Drag-and-drop files onto the window!");
+
+                            if ui.button("Open file…").clicked()
+                                && let Some(path) = rfd::FileDialog::new().pick_file()
+                            {
+                                self.picked_path = Some(path.display().to_string());
+                                self.img_display = true;
+                            }
+                        }
+                        if self.pallette_display {
+                            let p_size = self.pallette.pallette_size;
+                            ui.horizontal(|ui| {
+                                ui.label(format!("Pallette Size: {p_size}"));
+                                if ui.button("-").clicked() {
+                                    self.pallette.decrement_pallette_size();
+                                }
+                                if ui.button("+").clicked() {
+                                    self.pallette.increment_pallette_size();
+                                }
+                            });
+
+                            let pallette_button_size = egui::vec2(100., 100.);
+                            // Create a grid and add items to it
+                            ui.horizontal(|ui| {
+                                ui.set_min_height(500.);
+                                let num_columns = 4;
+                                egui::ScrollArea::vertical().show(ui, |ui| {
+                                    ui.vertical(|ui| {
+                                        ui.set_min_height(500.);
+                                        egui::Grid::new("Image Pallette").show(ui, |ui| {
+                                            for i in 0..self.pallette.top_colors.len() {
+                                                let c = self.pallette.top_colors[i];
+                                                let color =
+                                                    egui::Color32::from_rgb(c[0], c[1], c[2]);
+                                                let hex = Pallette::rgb_to_hex(c);
+                                                if ui
+                                                    .add_sized(
+                                                        pallette_button_size,
+                                                        egui::Button::new(egui::RichText::new(hex))
+                                                            .fill(color)
+                                                            .sense(egui::Sense::click()),
+                                                    )
+                                                    .clicked()
+                                                {
+                                                    let hex = Pallette::rgb_to_hex(c);
+                                                    // println!("Copy {hex}");
+                                                    ctx.copy_text(hex.to_owned());
+                                                }
+                                                if ui
+                                                    .add(egui::Button::new(egui::RichText::new(
+                                                        "Swap",
+                                                    )))
+                                                    .clicked()
+                                                {
+                                                    self.pallette.swap_top_color(i);
+                                                }
+                                                if (i + 1) % num_columns == 0 {
+                                                    ui.end_row(); // End the row after the specified number of columns
+                                                }
+                                            }
+                                        });
+                                    });
+                                })
+                            });
+
+                            ui.text_edit_singleline(&mut self.pallette_name);
+
+                            if ui.button("Save as PNG").clicked() {
+                                println!("Save clicked");
+                                self.pallette.save_pallette_img(self.pallette_name.clone())
+                            }
+                            if ui.button("Save as Text").clicked() {
+                                println!("Save clicked");
+                                self.pallette.save_pallette_text(self.pallette_name.clone())
+                            }
+
+                            if ui.button("Reset").clicked() {
+                                println!("reset");
+                                self.pallette.reset();
+                                self.picked_path = None;
+                                self.pallette_display = false;
+                                self.img_display = false;
+                                self.texture_id = None;
+                                self.dropped_files = Vec::new();
+                            }
                         }
 
-                        let mut additional_info = vec![];
-                        if !file.mime.is_empty() {
-                            additional_info.push(format!("type: {}", file.mime));
-                        }
-                        if let Some(bytes) = &file.bytes {
-                            additional_info.push(format!("{} bytes", bytes.len()));
-                        }
-                        if !additional_info.is_empty() {
-                            info += &format!(" ({})", additional_info.join(", "));
-                        }
+                        // Show dropped files (if any):
+                        if !self.dropped_files.is_empty() {
+                            ui.group(|ui| {
+                                ui.label("Dropped files:");
 
-                        ui.label(info);
-                    }
+                                for file in &self.dropped_files {
+                                    let mut info = if let Some(path) = &file.path {
+                                        path.display().to_string()
+                                    } else if !file.name.is_empty() {
+                                        file.name.clone()
+                                    } else {
+                                        "???".to_owned()
+                                    };
+                                    if ui.button(format!("Extract Pallette from {info}")).clicked()
+                                    {
+                                        // handle_extract_click(&info)
+                                        self.pallette.update(&info);
+                                        self.pallette_display = true;
+                                    }
+
+                                    let mut additional_info = vec![];
+                                    if !file.mime.is_empty() {
+                                        additional_info.push(format!("type: {}", file.mime));
+                                    }
+                                    if let Some(bytes) = &file.bytes {
+                                        additional_info.push(format!("{} bytes", bytes.len()));
+                                    }
+                                    if !additional_info.is_empty() {
+                                        info += &format!(" ({})", additional_info.join(", "));
+                                    }
+
+                                    ui.label(info);
+                                }
+                            });
+                        }
+                    });
                 });
-            }
+                image_panel(ui, self);
+            })
         });
 
         preview_files_being_dropped(ctx);
@@ -187,6 +201,24 @@ impl eframe::App for MyApp {
             }
         });
     }
+}
+
+fn image_panel(ui: &mut egui::Ui, app: &MyApp) {
+    ui.horizontal(|ui| {
+        ui.set_min_width(400.);
+        if app.img_display {
+            ui.horizontal(|ui| {
+                if let Some(texture_id) = &app.texture_id {
+                    let desired_size = egui::vec2(400.0, 500.0);
+                    ui.add(egui::Image::new(texture_id).fit_to_exact_size(desired_size));
+                } else {
+                    ui.label("Loading image...");
+                }
+            });
+        } else {
+            ui.image(egui::include_image!("assets/pallette.svg"));
+        }
+    });
 }
 
 // Function to load an image and return it as an Rgba image
