@@ -85,50 +85,7 @@ impl eframe::App for MyApp {
                                 }
                             });
 
-                            let pallette_button_size = egui::vec2(100., 100.);
-                            // Create a grid and add items to it
-                            ui.horizontal(|ui| {
-                                ui.set_min_height(500.);
-                                let num_columns = 4;
-                                egui::ScrollArea::vertical().show(ui, |ui| {
-                                    ui.vertical(|ui| {
-                                        ui.set_min_height(500.);
-                                        egui::Grid::new("Image Pallette").show(ui, |ui| {
-                                            for i in 0..self.pallette.top_colors.len() {
-                                                let c = self.pallette.top_colors[i];
-                                                let color =
-                                                    egui::Color32::from_rgb(c[0], c[1], c[2]);
-                                                let hex = Pallette::rgb_to_hex(c);
-                                                if ui
-                                                    .add_sized(
-                                                        pallette_button_size,
-                                                        egui::Button::new(egui::RichText::new(hex))
-                                                            .fill(color)
-                                                            .sense(egui::Sense::click()),
-                                                    )
-                                                    .clicked()
-                                                {
-                                                    let hex = Pallette::rgb_to_hex(c);
-                                                    // println!("Copy {hex}");
-                                                    ctx.copy_text(hex.to_owned());
-                                                }
-                                                if ui
-                                                    .add(egui::Button::new(egui::RichText::new(
-                                                        "Swap",
-                                                    )))
-                                                    .clicked()
-                                                {
-                                                    self.pallette.swap_top_color(i);
-                                                }
-                                                if (i + 1) % num_columns == 0 {
-                                                    ui.end_row(); // End the row after the specified number of columns
-                                                }
-                                            }
-                                        });
-                                    });
-                                })
-                            });
-
+                            pallette_panel(ui, self, ctx);
                             ui.text_edit_singleline(&mut self.pallette_name);
 
                             if ui.button("Save as PNG").clicked() {
@@ -201,6 +158,49 @@ impl eframe::App for MyApp {
             }
         });
     }
+}
+
+fn pallette_panel(ui: &mut egui::Ui, app: &mut MyApp, ctx: &egui::Context) {
+    let pallette_button_size = egui::vec2(100., 100.);
+    // Create a grid and add items to it
+    ui.horizontal(|ui| {
+        ui.set_min_height(500.);
+        let num_columns = 4;
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            ui.vertical(|ui| {
+                ui.set_min_height(500.);
+                egui::Grid::new("Image Pallette").show(ui, |ui| {
+                    for i in 0..app.pallette.top_colors.len() {
+                        let c = app.pallette.top_colors[i];
+                        let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
+                        let hex = Pallette::rgb_to_hex(c);
+                        if ui
+                            .add_sized(
+                                pallette_button_size,
+                                egui::Button::new(egui::RichText::new(hex))
+                                    .fill(color)
+                                    .sense(egui::Sense::click()),
+                            )
+                            .clicked()
+                        {
+                            let hex = Pallette::rgb_to_hex(c);
+                            // println!("Copy {hex}");
+                            ctx.copy_text(hex.to_owned());
+                        }
+                        if ui
+                            .add(egui::Button::new(egui::RichText::new("Swap")))
+                            .clicked()
+                        {
+                            app.pallette.swap_top_color(i);
+                        }
+                        if (i + 1) % num_columns == 0 {
+                            ui.end_row(); // End the row after the specified number of columns
+                        }
+                    }
+                });
+            });
+        })
+    });
 }
 
 fn image_panel(ui: &mut egui::Ui, app: &MyApp) {
