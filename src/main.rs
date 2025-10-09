@@ -21,13 +21,13 @@ fn main() -> eframe::Result {
         options,
         Box::new(|cc| {
             egui_extras::install_image_loaders(&cc.egui_ctx);
-            Ok(Box::<MyApp>::default())
+            Ok(Box::<PalletteApp>::default())
         }),
     )
 }
 
 #[derive(Default)]
-struct MyApp {
+struct PalletteApp {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
     pallette: Pallette,
@@ -37,7 +37,7 @@ struct MyApp {
     texture_id: Option<egui::TextureHandle>,
 }
 
-impl eframe::App for MyApp {
+impl eframe::App for PalletteApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
@@ -72,7 +72,7 @@ impl eframe::App for MyApp {
     }
 }
 
-fn pallette_panel(ui: &mut egui::Ui, app: &mut MyApp, ctx: &egui::Context) {
+fn pallette_panel(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context) {
     let pallette_button_size = egui::vec2(100., 100.);
     // Create a grid and add items to it
     ui.horizontal(|ui| {
@@ -115,7 +115,7 @@ fn pallette_panel(ui: &mut egui::Ui, app: &mut MyApp, ctx: &egui::Context) {
     });
 }
 
-fn pallette_control_buttons(ui: &mut egui::Ui, app: &mut MyApp) {
+fn pallette_control_buttons(ui: &mut egui::Ui, app: &mut PalletteApp) {
     let p_size = app.pallette.pallette_size;
     ui.horizontal(|ui| {
         ui.label(format!("Pallette Size: {p_size}"));
@@ -128,7 +128,7 @@ fn pallette_control_buttons(ui: &mut egui::Ui, app: &mut MyApp) {
     });
 }
 
-fn save_buttons(ui: &mut egui::Ui, app: &mut MyApp) {
+fn save_buttons(ui: &mut egui::Ui, app: &mut PalletteApp) {
     if ui.button("Save as PNG").clicked() {
         println!("Save clicked");
         app.pallette.save_pallette_img(app.pallette_name.clone())
@@ -139,7 +139,7 @@ fn save_buttons(ui: &mut egui::Ui, app: &mut MyApp) {
     }
 }
 
-fn reset_button(ui: &mut egui::Ui, app: &mut MyApp) {
+fn reset_button(ui: &mut egui::Ui, app: &mut PalletteApp) {
     if ui.button("Reset").clicked() {
         println!("reset");
         app.pallette.reset();
@@ -151,7 +151,7 @@ fn reset_button(ui: &mut egui::Ui, app: &mut MyApp) {
     }
 }
 
-fn file_picker(ui: &mut egui::Ui, app: &mut MyApp, ctx: &egui::Context) {
+fn file_picker(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context) {
     if let Some(picked_path) = &app.picked_path {
         if let Ok(img) = load_image(&picked_path) {
             let color_image = convert_img_for_display(img);
@@ -178,7 +178,7 @@ fn file_picker(ui: &mut egui::Ui, app: &mut MyApp, ctx: &egui::Context) {
     }
 }
 
-fn file_drop(ui: &mut egui::Ui, app: &mut MyApp) {
+fn file_drop(ui: &mut egui::Ui, app: &mut PalletteApp) {
     // Show dropped files (if any):
     if !app.dropped_files.is_empty() {
         ui.group(|ui| {
@@ -215,7 +215,7 @@ fn file_drop(ui: &mut egui::Ui, app: &mut MyApp) {
     }
 }
 
-fn image_panel(ui: &mut egui::Ui, app: &MyApp) {
+fn image_panel(ui: &mut egui::Ui, app: &PalletteApp) {
     ui.horizontal(|ui| {
         ui.set_min_width(400.);
         if app.img_display {
