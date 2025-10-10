@@ -3,9 +3,9 @@
 use eframe::egui;
 
 mod color;
+mod color_detail;
 mod pallette;
 mod similar;
-mod color_detail;
 use egui::ColorImage;
 use image::{DynamicImage, Rgb, RgbaImage};
 use pallette::Pallette;
@@ -61,7 +61,7 @@ impl Default for PalletteApp {
             panel_width: 400.,
             pallette_button_size: egui::vec2(100., 100.),
             show_details: None,
-            new_color: ColorDetail::default()
+            new_color: ColorDetail::default(),
         }
     }
 }
@@ -106,10 +106,6 @@ impl eframe::App for PalletteApp {
 }
 
 impl PalletteApp {
-    // pub fn update_similar_pallette_color(&mut self, original: Rgb<u8>, new_color: Rgb<u8>) {
-    //     self.pallette.update_color(original, new_color);
-    //     self.similar = None
-    // }
     fn no_file_view(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         // ui.centered_and_justified(|ui| {
         ui.vertical_centered(|ui| {
@@ -215,10 +211,10 @@ impl PalletteApp {
         });
     }
 
-    fn color_options_panel(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
+    fn color_options_panel(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         if let Some(idx) = self.show_details {
             let c = self.pallette.top_rgb[idx];
-                if ui
+            if ui
                 .add(egui::Button::new(egui::RichText::new("Complement")))
                 .clicked()
             {
@@ -231,21 +227,33 @@ impl PalletteApp {
                 self.similar = Some(Similar::new_similar(c, &self.pallette.all_entries, 10, 80.))
             }
         } else {
-            self.add_color(ui);
+            self.add_color(ui, ctx);
         }
     }
 
-
-    fn add_color(&mut self, ui: &mut egui::Ui) {
+    fn add_color(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.label("Add Color");
         ui.color_edit_button_srgba(&mut self.new_color.egui_color);
-            if ui
-                .add(egui::Button::new(egui::RichText::new("Add")))
-                .clicked()
-            {
-                // let new_col = Rgb([self.new_color.r(), self.new_color.g(), self.new_color.b()]);
-                    self.pallette.add_new_color(self.new_color.color);
-            }
+        // ToDo Update rest of color info on color change
+        if ui
+            .add_sized(
+                self.pallette_button_size,
+                egui::Button::new(egui::RichText::new("Add"))
+                    .fill(self.new_color.egui_color)
+                    .sense(egui::Sense::click()),
+            )
+            .clicked()
+        {
+            // let new_col = Rgb([self.new_color.r(), self.new_color.g(), self.new_color.b()]);
+            self.pallette.add_new_color(self.new_color.color);
+        }
+
+        if ui
+            .add(egui::Button::new(egui::RichText::new("Copy")))
+            .clicked()
+        {
+            ctx.copy_text(self.new_color.hex.to_owned());
+        }
     }
 
     fn pallette_color(&mut self, ui: &mut egui::Ui, ctx: &egui::Context, i: usize) {
