@@ -42,7 +42,7 @@ struct PalletteApp {
     pallette_name: String,
     texture_id: Option<egui::TextureHandle>,
     similar: Option<Similar>,
-    panel_width: f32
+    panel_width: f32,
 }
 
 impl Default for PalletteApp {
@@ -54,7 +54,7 @@ impl Default for PalletteApp {
             pallette_name: "New Pallette".to_string(),
             texture_id: None,
             similar: None,
-            panel_width: 400.
+            panel_width: 400.,
         }
     }
 }
@@ -211,23 +211,31 @@ impl PalletteApp {
                             {
                                 ctx.copy_text(hex.to_owned());
                             }
-                            if ui
-                                .add(egui::Button::new(egui::RichText::new("Swap")))
-                                .clicked()
-                            {
-                                self.pallette.swap_top_color(i);
-                            }
-                            if ui
-                                .add(egui::Button::new(egui::RichText::new("Similar")))
-                                .clicked()
-                            {
-                                self.similar = Some(Similar::new_similar(
-                                    c,
-                                    &self.pallette.all_entries,
-                                    10,
-                                    80.,
-                                ))
-                            }
+                            ui.vertical(|ui| {
+                                if ui
+                                    .add(egui::Button::new(egui::RichText::new("Swap")))
+                                    .clicked()
+                                {
+                                    self.pallette.swap_top_color(i);
+                                }
+                                if ui
+                                    .add(egui::Button::new(egui::RichText::new("Complement")))
+                                    .clicked()
+                                {
+                                    self.pallette.add_complementary(c);
+                                }
+                                if ui
+                                    .add(egui::Button::new(egui::RichText::new("Similar")))
+                                    .clicked()
+                                {
+                                    self.similar = Some(Similar::new_similar(
+                                        c,
+                                        &self.pallette.all_entries,
+                                        10,
+                                        80.,
+                                    ))
+                                }
+                            });
                             if (i + 1) % num_columns == 0 {
                                 ui.end_row(); // End the row after the specified number of columns
                             }
@@ -237,6 +245,7 @@ impl PalletteApp {
             })
         });
     }
+
 
     fn pallette_control_buttons(&mut self, ui: &mut egui::Ui) {
         let p_size = self.pallette.pallette_size;

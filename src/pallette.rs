@@ -158,6 +158,13 @@ impl Pallette {
             }
         }
     }
+    
+    pub fn add_complementary(&mut self, c: Rgb<u8>) {
+        let complement = Rgb([255- c[0], 255 - c[1], 255 - c[2]]);
+        self.pallette_size += 1;
+        self.top_rgb.push(complement);
+        self.top_hex.push(Self::rgb_to_hex(complement));
+    }
 
     pub fn extract_pallete(path: &str) -> Option<HashMap<Rgb<u8>, usize>> {
         println!("Extracting Pallette from {path} ");
@@ -246,4 +253,6 @@ impl Pallette {
     fn component_diff(c1: Rgb<u8>, c2: Rgb<u8>, component: usize) -> f32 {
         (c1[component] as f32) - (c2[component] as f32)
     }
+
+    // }
 }
