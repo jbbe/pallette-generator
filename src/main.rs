@@ -112,10 +112,10 @@ fn pallette_panel(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context)
             ui.vertical(|ui| {
                 ui.set_min_height(500.);
                 egui::Grid::new("Image Pallette").show(ui, |ui| {
-                    for i in 0..app.pallette.top_colors.len() {
-                        let c = app.pallette.top_colors[i];
+                    for i in 0..app.pallette.top_rgb.len() {
+                        let c = app.pallette.top_rgb[i];
                         let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
-                        let hex = Pallette::rgb_to_hex(c);
+                        let hex = &app.pallette.top_hex[i];
                         if ui
                             .add_sized(
                                 pallette_button_size,
@@ -125,8 +125,6 @@ fn pallette_panel(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context)
                             )
                             .clicked()
                         {
-                            let hex = Pallette::rgb_to_hex(c);
-                            // println!("Copy {hex}");
                             ctx.copy_text(hex.to_owned());
                         }
                         if ui
@@ -139,8 +137,7 @@ fn pallette_panel(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context)
                             .add(egui::Button::new(egui::RichText::new("Similar")))
                             .clicked()
                         {
-                            app.similar = Some(Similar::new(c, &app.pallette.all_entries))
-                            // app.similar
+                            app.similar = Some(Similar::new(c, &app.pallette.all_entries, 10))
                         }
                         if (i + 1) % num_columns == 0 {
                             ui.end_row(); // End the row after the specified number of columns
@@ -210,14 +207,6 @@ fn similar_selector(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Contex
     }
 }
 
-// fn similar_grid(
-//     ui: &mut egui::Ui,
-//     app: &mut PalletteApp,
-//     ctx: &egui::Context,
-//     similar_colors: &Vec<(Rgb<u8>, usize, f32)>,
-// ) {
-
-// }
 
 fn pallette_control_buttons(ui: &mut egui::Ui, app: &mut PalletteApp) {
     let p_size = app.pallette.pallette_size;

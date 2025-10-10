@@ -5,9 +5,10 @@ use raqote::*;
 use std::collections::HashMap;
 use std::io::{self, Write};
 
-// #[derive(Default)]
+
 pub(crate) struct Pallette {
-    pub top_colors: Vec<Rgb<u8>>,
+    pub top_rgb: Vec<Rgb<u8>>,
+    pub top_hex: Vec<String>,
     pub current_path: Option<String>,
     pub all_entries: Vec<(Rgb<u8>, usize)>,
     pub pallette_size: usize,
@@ -16,7 +17,8 @@ pub(crate) struct Pallette {
 impl Default for Pallette {
     fn default() -> Self {
         Self {
-            top_colors: Vec::new(),
+            top_rgb: Vec::new(),
+            top_hex: Vec::new(),
             current_path: None,
             all_entries: Vec::new(),
             pallette_size: 16,
@@ -44,8 +46,10 @@ impl Pallette {
     }
 
     pub fn update_top_colors(&mut self) {
-        self.top_colors = Self::get_top_colors(self.all_entries.clone(), self.pallette_size);
-        self.pallette_size = self.top_colors.len();
+        let res = Self::get_top_colors(self.all_entries.clone(), self.pallette_size);
+        self.top_rgb = res.0;
+        self.top_hex = res.1;
+        self.pallette_size = self.top_rgb.len();
     }
 
     pub fn get_unused_entry(&mut self) -> Option<Rgb<u8>> {
@@ -63,7 +67,7 @@ impl Pallette {
         array.shuffle(&mut rng);
         for i in array {
             let e = self.all_entries[i];
-            if !self.top_colors.contains(&e.0) {
+            if !self.top_rgb.contains(&e.0) {
                 return Some(e.0.clone());
             }
         }
@@ -75,7 +79,7 @@ impl Pallette {
         let e = self.get_unused_entry();
         // println!("Swap top color {idx}");
         match e {
-            Some(c) => self.top_colors[idx] = c,
+            Some(c) => self.top_rgb[idx] = c,
             None => (),
         }
     }
@@ -95,17 +99,18 @@ impl Pallette {
     }
 
     pub fn save_pallette_img(&mut self, pallette_name: String) {
-        Self::output_pallette(self.top_colors.clone(), &pallette_name);
+        self.output_pallette(&pallette_name);
     }
 
     pub fn save_pallette_text(&mut self, pallette_name: String) {
-        if let Err(e) = Self::output_pallette_txt(self.top_colors.clone(), &pallette_name) {
+        if let Err(e) = self.output_pallette_txt(&pallette_name) {
             eprintln!("Error writing to file: {}", e);
         }
     }
 
     pub fn reset(&mut self) {
-        self.top_colors = Vec::new();
+        self.top_rgb = Vec::new();
+        self.top_hex = Vec::new();
         self.current_path = None;
         self.all_entries = Vec::new();
         self.pallette_size = 16;
@@ -123,33 +128,34 @@ impl Pallette {
         entries
     }
 
-    pub fn get_top_colors(entries: Vec<(Rgb<u8>, usize)>, top_n: usize) -> Vec<Rgb<u8>> {
-        let mut res = Vec::new();
+    pub fn get_top_colors(entries: Vec<(Rgb<u8>, usize)>, top_n: usize) -> (Vec<Rgb<u8>>, Vec<String>) {
+        let mut top_rgb = Vec::new();
+        let mut top_hex = Vec::new();
         for e in entries {
             let mut should_add = true;
-            if res.len() >= top_n {
+            if top_rgb.len() >= top_n {
                 break;
             }
-            for c in &res {
+            for c in &top_rgb {
                 if Self::color_distance(e.0, *c) < 20. {
                     should_add = false;
                     break;
                 }
             }
             if should_add {
-                res.push(e.0);
+                top_rgb.push(e.0);
+                top_hex.push(Pallette::rgb_to_hex(e.0));
             }
         }
 
-        res
+        (top_rgb, top_hex)
     }
 
     pub fn update_color(&mut self, original: Rgb<u8>, new_color: Rgb<u8>) {
-        // let i = self.top_colors.index(original);
-        // self.top_colors[i] = new_color;
-        for i in 0..self.top_colors.len() {
-            if self.top_colors[i] == original {
-                self.top_colors[i] = new_color; // Replace the item
+        for i in 0..self.top_rgb.len() {
+            if self.top_rgb[i] == original {
+                self.top_rgb[i] = new_color;
+                self.top_hex[i] = Self::rgb_to_hex(new_color);
             }
         }
     }
@@ -169,21 +175,22 @@ impl Pallette {
         Some(pix)
     }
 
-    fn output_pallette_txt(colors: Vec<Rgb<u8>>, pal_name: &str) -> io::Result<()> {
-        let strs = colors.iter().map(|c| Self::rgb_to_hex(*c));
+    fn output_pallette_txt(&mut self, pal_name: &str) -> io::Result<()> {
+        // let strs = colors.iter().map(|c| Self::rgb_to_hex(*c));
         let output_path = format!("pallettes/{pal_name}.txt");
         let mut output = std::fs::File::create(&output_path)?;
-        for line in strs {
+        for line in self.top_hex.clone().iter() {
             writeln!(output, "{}", line)?;
         }
         Ok(())
     }
 
-    fn output_pallette(colors: Vec<Rgb<u8>>, pal_name: &str) {
+    fn output_pallette(&mut self, pal_name: &str) {
         println!("Output pallette");
         let square_size = 64.;
         let margin = 16.;
         let width = 512;
+        let colors = self.top_rgb.clone();
         let height = ((margin + square_size) * ((colors.len() as f32) / 5.) + margin) as i32;
 
         let mut dt = DrawTarget::new(width, height);
