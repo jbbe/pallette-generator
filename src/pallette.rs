@@ -27,14 +27,14 @@ impl Default for Pallette {
 }
 
 impl Pallette {
-    pub fn update(&mut self, path: &String) {
+    pub fn update(&mut self, path: &str) {
         if let Some(cur) = &self.current_path {
             // Return early if they are the same
             if cur == path {
                 return;
             }
         }
-        self.current_path = Some(path.clone());
+        self.current_path = Some(path.to_string());
         let map = Self::extract_pallete(&self.current_path.clone().unwrap()).unwrap();
 
         // let full_pallette = extract_pallete(pal_name, &file_path).unwrap();
@@ -55,7 +55,7 @@ impl Pallette {
     pub fn get_unused_entry(&mut self) -> Option<Rgb<u8>> {
         // Create an array of integers from `start` to `end`
         let start = 0;
-        let end = if self.all_entries.len() > 0 {
+        let end = if !self.all_entries.is_empty() {
             self.all_entries.len() - 1
         } else {
             0
@@ -68,7 +68,7 @@ impl Pallette {
         for i in array {
             let e = self.all_entries[i];
             if !self.top_rgb.contains(&e.0) {
-                return Some(e.0.clone());
+                return Some(e.0);
             }
         }
         None
@@ -78,9 +78,8 @@ impl Pallette {
         println!("Swap top color {idx}");
         let e = self.get_unused_entry();
         // println!("Swap top color {idx}");
-        match e {
-            Some(c) => self.top_rgb[idx] = c,
-            None => (),
+        if let Some(c) = e {
+            self.top_rgb[idx] = c
         }
     }
 
@@ -202,7 +201,7 @@ impl Pallette {
         let path = pb.finish();
         // let solid = SolidSource::from_unpremultiplied_argb(0xff, 0, 0, 0);
         let solid = SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0xff, 0xff);
-        dt.fill(&path, &&Source::Solid(solid), &DrawOptions::new());
+        dt.fill(&path, &Source::Solid(solid), &DrawOptions::new());
 
         let mut current_x = 0.;
         let mut current_y = margin;
@@ -218,7 +217,7 @@ impl Pallette {
             pb.close();
             let path = pb.finish();
             let solid = SolidSource::from_unpremultiplied_argb(0xff, color[0], color[1], color[2]);
-            dt.fill(&path, &&Source::Solid(solid), &DrawOptions::new());
+            dt.fill(&path, &Source::Solid(solid), &DrawOptions::new());
             current_col += 1;
             if current_col > col_count {
                 current_col = 0;

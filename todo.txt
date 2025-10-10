@@ -1,8 +1,10 @@
-Remove highly similar colors from top pick
-remove colors and replace with next top match
 highlight on image on color hover
+center image
+limit filepicker extensions
 
 done
 
 gui
 drag and drop
+Remove highly similar colors from top pick
+remove colors and replace with next top match

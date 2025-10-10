@@ -175,7 +175,7 @@ fn similar_selector(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Contex
             egui::Grid::new("Image Pallette").show(ui, |ui| {
                 let pallette_button_size = egui::vec2(100., 100.);
                 // for i in 0..sim.similar_colors.len() {
-                for (_index, entry) in sim.similar_colors.iter().enumerate() {
+                for entry in sim.similar_colors.iter() {
                     // let entry = sim.similar_colors[i];
                     let c = entry.0;
                     let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
@@ -242,7 +242,7 @@ fn reset_button(ui: &mut egui::Ui, app: &mut PalletteApp) {
 
 fn file_info(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context) {
     if let Some(picked_path) = &app.picked_path {
-        if let Ok(img) = load_image(&picked_path) {
+        if let Ok(img) = load_image(picked_path) {
             let color_image = convert_img_for_display(img);
             app.texture_id = Some(ctx.load_texture("my_image", color_image, Default::default()));
         }
@@ -251,7 +251,7 @@ fn file_info(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context) {
             ui.monospace(picked_path);
         });
         if ui.button("Extract Pallette").clicked() {
-            app.pallette.update(&picked_path);
+            app.pallette.update(picked_path);
             app.app_state = AppState::PalletteGenerated;
         }
     }
@@ -299,11 +299,10 @@ fn load_image(path: &str) -> Result<DynamicImage, Box<dyn std::error::Error>> {
 
 fn convert_img_for_display(img: DynamicImage) -> ColorImage {
     let rgba_image: RgbaImage = img.to_rgba8();
-    let color_image = ColorImage::from_rgba_unmultiplied(
+    ColorImage::from_rgba_unmultiplied(
         [rgba_image.width() as usize, rgba_image.height() as usize],
         rgba_image.as_raw(),
-    );
-    return color_image;
+    )
 }
 
 /// Preview hovering files:
