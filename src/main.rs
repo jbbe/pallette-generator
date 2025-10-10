@@ -37,7 +37,6 @@ enum AppState {
 
 struct PalletteApp {
     app_state: AppState,
-    dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
     pallette: Pallette,
     pallette_name: String,
@@ -49,7 +48,6 @@ impl Default for PalletteApp {
     fn default() -> Self {
         Self {
             app_state: AppState::NoFile,
-            dropped_files: Vec::new(),
             picked_path: None,
             pallette: Pallette::default(),
             pallette_name: "New Pallette".to_string(),
@@ -69,11 +67,19 @@ impl eframe::App for PalletteApp {
                         AppState::NoFile => {
                             ui.centered_and_justified(|ui| {
                                 file_picker(ui, self);
+                                // Collect dropped files:
+                                ctx.input(|i| {
+                                    if !i.raw.dropped_files.is_empty() {
+                                        if let Some(f_path) = &i.raw.dropped_files[0].path {
+                                            self.picked_path = Some(f_path.display().to_string())
+                                        }
+                                        self.app_state = AppState::FileSelected;
+                                    }
+                                });
                             });
                         }
                         AppState::FileSelected => {
-                            picked_file_info(ui, self, ctx);
-                            dropped_file_options(ui, self);
+                            file_info(ui, self, ctx);
                         }
                         AppState::PalletteGenerated => {
                             pallette_control_buttons(ui, self);
@@ -92,13 +98,6 @@ impl eframe::App for PalletteApp {
         });
 
         preview_files_being_dropped(ctx);
-
-        // Collect dropped files:
-        ctx.input(|i| {
-            if !i.raw.dropped_files.is_empty() {
-                self.dropped_files.clone_from(&i.raw.dropped_files);
-            }
-        });
     }
 }
 
@@ -169,7 +168,7 @@ fn similar_selector(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Contex
             // println!("Copy {hex}");
             ctx.copy_text(hex.to_owned());
         }
-        egui::ScrollArea::horizontal().show(ui, |ui | {
+        egui::ScrollArea::horizontal().show(ui, |ui| {
             // similar_grid(ui, &app, ctx, &sim.similar_colors);
 
             ui.set_max_width(400.);
@@ -207,7 +206,6 @@ fn similar_selector(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Contex
     }
 }
 
-
 fn pallette_control_buttons(ui: &mut egui::Ui, app: &mut PalletteApp) {
     let p_size = app.pallette.pallette_size;
     ui.horizontal(|ui| {
@@ -239,11 +237,10 @@ fn reset_button(ui: &mut egui::Ui, app: &mut PalletteApp) {
         app.picked_path = None;
         app.app_state = AppState::NoFile;
         app.texture_id = None;
-        app.dropped_files = Vec::new();
     }
 }
 
-fn picked_file_info(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context) {
+fn file_info(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context) {
     if let Some(picked_path) = &app.picked_path {
         if let Ok(img) = load_image(&picked_path) {
             let color_image = convert_img_for_display(img);
@@ -259,10 +256,9 @@ fn picked_file_info(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Contex
         }
     }
 }
-
 fn file_picker(ui: &mut egui::Ui, app: &mut PalletteApp) {
     if app.picked_path.is_none() {
-        ui.label("Drag-and-drop files onto the window!");
+        ui.label("Drag and drop a file to create a pallette");
 
         if ui.button("Open file…").clicked()
             && let Some(path) = rfd::FileDialog::new().pick_file()
@@ -270,42 +266,6 @@ fn file_picker(ui: &mut egui::Ui, app: &mut PalletteApp) {
             app.picked_path = Some(path.display().to_string());
             app.app_state = AppState::FileSelected;
         }
-    }
-}
-
-fn dropped_file_options(ui: &mut egui::Ui, app: &mut PalletteApp) {
-    // Show dropped files (if any):
-    if !app.dropped_files.is_empty() {
-        ui.group(|ui| {
-            ui.label("Dropped files:");
-
-            for file in &app.dropped_files {
-                let mut info = if let Some(path) = &file.path {
-                    path.display().to_string()
-                } else if !file.name.is_empty() {
-                    file.name.clone()
-                } else {
-                    "???".to_owned()
-                };
-                if ui.button(format!("Extract Pallette from {info}")).clicked() {
-                    app.pallette.update(&info);
-                    app.app_state = AppState::PalletteGenerated;
-                }
-
-                let mut additional_info = vec![];
-                if !file.mime.is_empty() {
-                    additional_info.push(format!("type: {}", file.mime));
-                }
-                if let Some(bytes) = &file.bytes {
-                    additional_info.push(format!("{} bytes", bytes.len()));
-                }
-                if !additional_info.is_empty() {
-                    info += &format!(" ({})", additional_info.join(", "));
-                }
-
-                ui.label(info);
-            }
-        });
     }
 }
 
