@@ -4,9 +4,12 @@ use eframe::egui;
 
 mod color;
 mod pallette;
+mod similar;
 use egui::ColorImage;
 use image::{DynamicImage, RgbaImage};
 use pallette::Pallette;
+
+use crate::similar::Similar;
 
 fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -37,10 +40,9 @@ struct PalletteApp {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
     pallette: Pallette,
-    // img_display: bool,
-    // pallette_display: bool,
     pallette_name: String,
     texture_id: Option<egui::TextureHandle>,
+    similar: Option<Similar>,
 }
 
 impl Default for PalletteApp {
@@ -52,6 +54,7 @@ impl Default for PalletteApp {
             pallette: Pallette::default(),
             pallette_name: "New Pallette".to_string(),
             texture_id: None,
+            similar: None,
         }
     }
 }
@@ -75,6 +78,8 @@ impl eframe::App for PalletteApp {
                         AppState::PalletteGenerated => {
                             pallette_control_buttons(ui, self);
                             pallette_panel(ui, self, ctx);
+                            similar_selector(ui, self, ctx);
+
                             ui.text_edit_singleline(&mut self.pallette_name);
 
                             save_buttons(ui, self);
@@ -130,6 +135,13 @@ fn pallette_panel(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context)
                         {
                             app.pallette.swap_top_color(i);
                         }
+                        if ui
+                            .add(egui::Button::new(egui::RichText::new("Similar")))
+                            .clicked()
+                        {
+                            app.similar = Some(Similar::new(c, &app.pallette.all_entries))
+                            // app.similar
+                        }
                         if (i + 1) % num_columns == 0 {
                             ui.end_row(); // End the row after the specified number of columns
                         }
@@ -139,6 +151,73 @@ fn pallette_panel(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context)
         })
     });
 }
+
+fn similar_selector(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context) {
+    if let Some(sim) = &app.similar {
+        let pallette_button_size = egui::vec2(100., 100.);
+        let c = sim.color;
+        let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
+        let hex = Pallette::rgb_to_hex(c);
+        // sim.similar_colors
+        if ui
+            .add_sized(
+                pallette_button_size,
+                egui::Button::new(egui::RichText::new(hex))
+                    .fill(color)
+                    .sense(egui::Sense::click()),
+            )
+            .clicked()
+        {
+            let hex = Pallette::rgb_to_hex(c);
+            // println!("Copy {hex}");
+            ctx.copy_text(hex.to_owned());
+        }
+        egui::ScrollArea::horizontal().show(ui, |ui | {
+            // similar_grid(ui, &app, ctx, &sim.similar_colors);
+
+            ui.set_max_width(400.);
+            egui::Grid::new("Image Pallette").show(ui, |ui| {
+                let pallette_button_size = egui::vec2(100., 100.);
+                // for i in 0..sim.similar_colors.len() {
+                for (_index, entry) in sim.similar_colors.iter().enumerate() {
+                    // let entry = sim.similar_colors[i];
+                    let c = entry.0;
+                    let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
+                    let hex = Pallette::rgb_to_hex(c);
+                    if ui
+                        .add_sized(
+                            pallette_button_size,
+                            egui::Button::new(egui::RichText::new(hex))
+                                .fill(color)
+                                .sense(egui::Sense::click()),
+                        )
+                        .clicked()
+                    {
+                        let hex = Pallette::rgb_to_hex(c);
+                        // println!("Copy {hex}");
+                        ctx.copy_text(hex.to_owned());
+                    }
+                    if ui
+                        .add(egui::Button::new(egui::RichText::new("Replace")))
+                        .clicked()
+                    {
+                        app.pallette.update_color(sim.color, c);
+                        // app.similar = None
+                    }
+                }
+            });
+        });
+    }
+}
+
+// fn similar_grid(
+//     ui: &mut egui::Ui,
+//     app: &mut PalletteApp,
+//     ctx: &egui::Context,
+//     similar_colors: &Vec<(Rgb<u8>, usize, f32)>,
+// ) {
+
+// }
 
 fn pallette_control_buttons(ui: &mut egui::Ui, app: &mut PalletteApp) {
     let p_size = app.pallette.pallette_size;

@@ -142,13 +142,16 @@ impl Pallette {
         }
 
         res
-        // Take the top N entries
-        // entries
-        //     .into_iter()
-        //     .map(|e| e.0)
-        //     .take(top_n)
-        //     // .cloned()
-        //     .collect()
+    }
+
+    pub fn update_color(&mut self, original: Rgb<u8>, new_color: Rgb<u8>) {
+        // let i = self.top_colors.index(original);
+        // self.top_colors[i] = new_color;
+        for i in 0..self.top_colors.len() {
+            if self.top_colors[i] == original {
+                self.top_colors[i] = new_color; // Replace the item
+            }
+        }
     }
 
     pub fn extract_pallete(path: &str) -> Option<HashMap<Rgb<u8>, usize>> {
@@ -221,8 +224,8 @@ impl Pallette {
         let _ = dt.write_png(format!("pallettes/{pal_name}.png"));
     }
 
-    fn color_distance(c1: Rgb<u8>, c2: Rgb<u8>) -> f32 {
-        let ap_r = 0.5 * ((c1[0] as f32 + c2[0] as f32));
+    pub fn color_distance(c1: Rgb<u8>, c2: Rgb<u8>) -> f32 {
+        let ap_r = 0.5 * (c1[0] as f32 + c2[0] as f32);
         let dr = Self::component_diff(c1, c2, 0);
         let dg = Self::component_diff(c1, c2, 1);
         let db = Self::component_diff(c1, c2, 2);
