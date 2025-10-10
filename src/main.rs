@@ -108,7 +108,9 @@ impl PalletteApp {
     // }
 
     fn similar_selector(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        let mut show_close = false;
         if let Some(sim) = &self.similar {
+            show_close = true;
             let pallette_button_size = egui::vec2(100., 100.);
             let c = sim.color;
             let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
@@ -161,6 +163,11 @@ impl PalletteApp {
                         }
                     });
                 });
+        }
+        if show_close {
+            if ui.add(egui::Button::new(egui::RichText::new("Close"))).clicked() {
+                self.similar = None;
+            }
         }
     }
 
