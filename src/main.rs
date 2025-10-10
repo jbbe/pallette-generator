@@ -5,11 +5,12 @@ use eframe::egui;
 mod color;
 mod pallette;
 mod similar;
+mod color_detail;
 use egui::ColorImage;
 use image::{DynamicImage, Rgb, RgbaImage};
 use pallette::Pallette;
 
-use crate::{similar::Similar};
+use crate::{color::ColorUtil, color_detail::ColorDetail, similar::Similar};
 
 fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -45,7 +46,7 @@ struct PalletteApp {
     panel_width: f32,
     pallette_button_size: egui::Vec2,
     show_details: Option<usize>,
-    new_color: egui::Color32,
+    new_color: ColorDetail,
 }
 
 impl Default for PalletteApp {
@@ -60,7 +61,7 @@ impl Default for PalletteApp {
             panel_width: 400.,
             pallette_button_size: egui::vec2(100., 100.),
             show_details: None,
-            new_color: egui::Color32::from_rgb(171, 105, 89)
+            new_color: ColorDetail::default()
         }
     }
 }
@@ -133,7 +134,7 @@ impl PalletteApp {
             let pallette_button_size = egui::vec2(100., 100.);
             let c = sim.color;
             let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
-            let hex = Pallette::rgb_to_hex(c);
+            let hex = ColorUtil::rgb_to_hex(c);
             // sim.similar_colors
             if ui
                 .add_sized(
@@ -144,7 +145,7 @@ impl PalletteApp {
                 )
                 .clicked()
             {
-                let hex = Pallette::rgb_to_hex(c);
+                let hex = ColorUtil::rgb_to_hex(c);
                 // println!("Copy {hex}");
                 ctx.copy_text(hex.to_owned());
             }
@@ -157,7 +158,7 @@ impl PalletteApp {
                         for entry in sim.similar_colors.iter() {
                             let c = entry.0;
                             let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
-                            let hex = Pallette::rgb_to_hex(c);
+                            let hex = ColorUtil::rgb_to_hex(c);
                             if ui
                                 .add_sized(
                                     pallette_button_size,
@@ -167,7 +168,7 @@ impl PalletteApp {
                                 )
                                 .clicked()
                             {
-                                let hex = Pallette::rgb_to_hex(c);
+                                let hex = ColorUtil::rgb_to_hex(c);
                                 // println!("Copy {hex}");
                                 ctx.copy_text(hex.to_owned());
                             }
@@ -237,13 +238,13 @@ impl PalletteApp {
 
     fn add_color(&mut self, ui: &mut egui::Ui) {
         ui.label("Add Color");
-        ui.color_edit_button_srgba(&mut self.new_color);
+        ui.color_edit_button_srgba(&mut self.new_color.egui_color);
             if ui
                 .add(egui::Button::new(egui::RichText::new("Add")))
                 .clicked()
             {
-                let new_col = Rgb([self.new_color.r(), self.new_color.g(), self.new_color.b()]);
-                    self.pallette.add_new_color(new_col);
+                // let new_col = Rgb([self.new_color.r(), self.new_color.g(), self.new_color.b()]);
+                    self.pallette.add_new_color(self.new_color.color);
             }
     }
 

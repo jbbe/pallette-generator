@@ -117,9 +117,6 @@ impl Pallette {
         self.pallette_size = 16;
     }
 
-    pub fn rgb_to_hex(color: Rgb<u8>) -> String {
-        format!("#{:02X}{:02X}{:02X}", color[0], color[1], color[2])
-    }
 
     fn get_sorted_entries(pallette: HashMap<Rgb<u8>, usize>) -> Vec<(Rgb<u8>, usize)> {
         let mut entries: Vec<(Rgb<u8>, usize)> = pallette.into_iter().collect();
@@ -145,7 +142,7 @@ impl Pallette {
             }
             if should_add {
                 top_rgb.push(e.0);
-                top_hex.push(Pallette::rgb_to_hex(e.0));
+                top_hex.push(ColorUtil::rgb_to_hex(e.0));
             }
         }
 
@@ -156,7 +153,7 @@ impl Pallette {
         for i in 0..self.top_rgb.len() {
             if self.top_rgb[i] == original {
                 self.top_rgb[i] = new_color;
-                self.top_hex[i] = Self::rgb_to_hex(new_color);
+                self.top_hex[i] = ColorUtil::rgb_to_hex(new_color);
             }
         }
     }
@@ -169,7 +166,7 @@ impl Pallette {
     pub fn add_new_color(&mut self, c: Rgb<u8>) {
         self.pallette_size += 1;
         self.top_rgb.push(c);
-        self.top_hex.push(Self::rgb_to_hex(c));
+        self.top_hex.push(ColorUtil::rgb_to_hex(c));
     }
 
     pub fn extract_pallete(path: &str) -> Option<HashMap<Rgb<u8>, usize>> {

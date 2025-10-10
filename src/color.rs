@@ -1,9 +1,9 @@
 #![allow(warnings)]
 
 use image::Rgb;
+use rand::Rng;
 
-
-pub (crate)struct ColorUtil {}
+pub(crate) struct ColorUtil {}
 
 impl ColorUtil {
     pub fn color_distance(c1: Rgb<u8>, c2: Rgb<u8>) -> f32 {
@@ -23,4 +23,27 @@ impl ColorUtil {
         (c1[component] as f32) - (c2[component] as f32)
     }
 
+    pub fn rgb_to_hex(color: Rgb<u8>) -> String {
+        format!("#{:02X}{:02X}{:02X}", color[0], color[1], color[2])
+    }
+
+    pub fn get_compliment(c: Rgb<u8>) -> Rgb<u8> {
+        Rgb([255- c[0], 255 - c[1], 255 - c[2]])
+    }
+
+    pub fn rand_color() -> Rgb<u8> {
+        let mut rng = rand::thread_rng();
+        let r: u8 = rng.gen_range(0..=255);
+        let g: u8 = rng.gen_range(0..=255);
+        let b: u8 = rng.gen_range(0..=255);
+        Rgb([r,g,b])
+    }
+
+    pub fn rand_egui_color() -> egui::Color32 {
+        let mut rng = rand::thread_rng();
+        let r: u8 = rng.gen_range(0..=255);
+        let g: u8 = rng.gen_range(0..=255);
+        let b: u8 = rng.gen_range(0..=255);
+        egui::Color32::from_rgb(r, g, b)
+    }
 }
