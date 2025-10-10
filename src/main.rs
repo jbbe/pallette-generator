@@ -17,7 +17,7 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
     eframe::run_native(
-        "Native file dialogs and drag-and-drop files",
+        "Pallette Generator",
         options,
         Box::new(|cc| {
             egui_extras::install_image_loaders(&cc.egui_ctx);
@@ -26,15 +26,34 @@ fn main() -> eframe::Result {
     )
 }
 
-#[derive(Default)]
+enum AppState {
+    NoFile,
+    FileSelected,
+    PalletteGenerated,
+}
+
 struct PalletteApp {
+    app_state: AppState,
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
     pallette: Pallette,
-    img_display: bool,
-    pallette_display: bool,
+    // img_display: bool,
+    // pallette_display: bool,
     pallette_name: String,
     texture_id: Option<egui::TextureHandle>,
+}
+
+impl Default for PalletteApp {
+    fn default() -> Self {
+        Self {
+            app_state: AppState::NoFile,
+            dropped_files: Vec::new(),
+            picked_path: None,
+            pallette: Pallette::default(),
+            pallette_name: "New Pallette".to_string(),
+            texture_id: None,
+        }
+    }
 }
 
 impl eframe::App for PalletteApp {
@@ -43,10 +62,17 @@ impl eframe::App for PalletteApp {
             ui.horizontal(|ui| {
                 ui.group(|ui| {
                     ui.set_min_size(egui::Vec2::new(500., 700.));
-
-                    ui.vertical(|ui| {
-                        file_picker(ui, self, ctx);
-                        if self.pallette_display {
+                    ui.vertical(|ui| match self.app_state {
+                        AppState::NoFile => {
+                            ui.centered_and_justified(|ui| {
+                                file_picker(ui, self);
+                            });
+                        }
+                        AppState::FileSelected => {
+                            picked_file_info(ui, self, ctx);
+                            dropped_file_options(ui, self);
+                        }
+                        AppState::PalletteGenerated => {
                             pallette_control_buttons(ui, self);
                             pallette_panel(ui, self, ctx);
                             ui.text_edit_singleline(&mut self.pallette_name);
@@ -54,7 +80,6 @@ impl eframe::App for PalletteApp {
                             save_buttons(ui, self);
                             reset_button(ui, self);
                         }
-                        file_drop(ui, self);
                     });
                 });
                 image_panel(ui, self);
@@ -144,14 +169,13 @@ fn reset_button(ui: &mut egui::Ui, app: &mut PalletteApp) {
         println!("reset");
         app.pallette.reset();
         app.picked_path = None;
-        app.pallette_display = false;
-        app.img_display = false;
+        app.app_state = AppState::NoFile;
         app.texture_id = None;
         app.dropped_files = Vec::new();
     }
 }
 
-fn file_picker(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context) {
+fn picked_file_info(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context) {
     if let Some(picked_path) = &app.picked_path {
         if let Ok(img) = load_image(&picked_path) {
             let color_image = convert_img_for_display(img);
@@ -163,22 +187,25 @@ fn file_picker(ui: &mut egui::Ui, app: &mut PalletteApp, ctx: &egui::Context) {
         });
         if ui.button("Extract Pallette").clicked() {
             app.pallette.update(&picked_path);
-            app.pallette_display = true;
-            app.img_display = true;
+            app.app_state = AppState::PalletteGenerated;
         }
-    } else {
+    }
+}
+
+fn file_picker(ui: &mut egui::Ui, app: &mut PalletteApp) {
+    if app.picked_path.is_none() {
         ui.label("Drag-and-drop files onto the window!");
 
         if ui.button("Open file…").clicked()
             && let Some(path) = rfd::FileDialog::new().pick_file()
         {
             app.picked_path = Some(path.display().to_string());
-            app.img_display = true;
+            app.app_state = AppState::FileSelected;
         }
     }
 }
 
-fn file_drop(ui: &mut egui::Ui, app: &mut PalletteApp) {
+fn dropped_file_options(ui: &mut egui::Ui, app: &mut PalletteApp) {
     // Show dropped files (if any):
     if !app.dropped_files.is_empty() {
         ui.group(|ui| {
@@ -193,9 +220,8 @@ fn file_drop(ui: &mut egui::Ui, app: &mut PalletteApp) {
                     "???".to_owned()
                 };
                 if ui.button(format!("Extract Pallette from {info}")).clicked() {
-                    // handle_extract_click(&info)
                     app.pallette.update(&info);
-                    app.pallette_display = true;
+                    app.app_state = AppState::PalletteGenerated;
                 }
 
                 let mut additional_info = vec![];
@@ -218,18 +244,22 @@ fn file_drop(ui: &mut egui::Ui, app: &mut PalletteApp) {
 fn image_panel(ui: &mut egui::Ui, app: &PalletteApp) {
     ui.horizontal(|ui| {
         ui.set_min_width(400.);
-        if app.img_display {
-            ui.horizontal(|ui| {
-                if let Some(texture_id) = &app.texture_id {
-                    let desired_size = egui::vec2(400.0, 500.0);
-                    ui.add(egui::Image::new(texture_id).fit_to_exact_size(desired_size));
-                } else {
-                    ui.label("Loading image...");
-                }
-            });
-        } else {
-            ui.image(egui::include_image!("assets/pallette.svg"));
-        }
+        ui.centered_and_justified(|ui| match app.app_state {
+            AppState::NoFile => {
+                ui.set_min_size(egui::Vec2::new(200., 200.));
+                ui.image(egui::include_image!("assets/pallette.svg"));
+            }
+            AppState::FileSelected | AppState::PalletteGenerated => {
+                ui.horizontal(|ui| {
+                    if let Some(texture_id) = &app.texture_id {
+                        let desired_size = egui::vec2(400.0, 500.0);
+                        ui.add(egui::Image::new(texture_id).fit_to_exact_size(desired_size));
+                    } else {
+                        ui.label("Loading image...");
+                    }
+                });
+            }
+        });
     });
 }
 
