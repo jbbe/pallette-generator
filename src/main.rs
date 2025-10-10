@@ -43,6 +43,9 @@ struct PalletteApp {
     texture_id: Option<egui::TextureHandle>,
     similar: Option<Similar>,
     panel_width: f32,
+    pallette_button_size: egui::Vec2,
+    show_details: Option<usize>,
+    new_color: egui::Color32,
 }
 
 impl Default for PalletteApp {
@@ -55,6 +58,9 @@ impl Default for PalletteApp {
             texture_id: None,
             similar: None,
             panel_width: 400.,
+            pallette_button_size: egui::vec2(100., 100.),
+            show_details: None,
+            new_color: egui::Color32::from_rgb(171, 105, 89)
         }
     }
 }
@@ -76,6 +82,7 @@ impl eframe::App for PalletteApp {
                         AppState::PalletteGenerated => {
                             self.pallette_control_buttons(ui);
                             self.pallette_panel(ui, ctx);
+                            self.color_options_panel(ui, ctx);
                             self.similar_selector(ui, ctx);
 
                             ui.text_edit_singleline(&mut self.pallette_name);
@@ -201,20 +208,54 @@ impl PalletteApp {
                                 ui.end_row(); // End the row after the specified number of columns
                             }
                         }
+                        self.add_color(ui);
                     });
                 });
             })
         });
     }
 
+    fn color_options_panel(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
+        if let Some(idx) = self.show_details {
+            let c = self.pallette.top_rgb[idx];
+                if ui
+                .add(egui::Button::new(egui::RichText::new("Complement")))
+                .clicked()
+            {
+                self.pallette.add_complementary(c);
+            }
+            if ui
+                .add(egui::Button::new(egui::RichText::new("Similar")))
+                .clicked()
+            {
+                self.similar = Some(Similar::new_similar(c, &self.pallette.all_entries, 10, 80.))
+            }
+        } else {
+            self.add_color(ui);
+        }
+    }
+
+
+    fn add_color(&mut self, ui: &mut egui::Ui) {
+        ui.label("Add Color");
+        ui.color_edit_button_srgba(&mut self.new_color);
+            if ui
+                .add(egui::Button::new(egui::RichText::new("Add")))
+                .clicked()
+            {
+                let new_col = Rgb([self.new_color.r(), self.new_color.g(), self.new_color.b()]);
+                    self.pallette.add_new_color(new_col);
+            }
+    }
+
     fn pallette_color(&mut self, ui: &mut egui::Ui, ctx: &egui::Context, i: usize) {
-        let pallette_button_size = egui::vec2(100., 100.);
+        // let pallette_button_size = ;
         let c = self.pallette.top_rgb[i];
         let hex = &self.pallette.top_hex[i];
         let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
         if ui
             .add_sized(
-                pallette_button_size,
+                self.pallette_button_size,
                 egui::Button::new(egui::RichText::new(hex))
                     .fill(color)
                     .sense(egui::Sense::click()),
@@ -232,17 +273,23 @@ impl PalletteApp {
                 self.pallette.swap_top_color(i);
             }
             if ui
-                .add(egui::Button::new(egui::RichText::new("Complement")))
+                .add(egui::Button::new(egui::RichText::new("Options")))
                 .clicked()
             {
-                self.pallette.add_complementary(c);
+                self.show_details = Some(i);
             }
-            if ui
-                .add(egui::Button::new(egui::RichText::new("Similar")))
-                .clicked()
-            {
-                self.similar = Some(Similar::new_similar(c, &self.pallette.all_entries, 10, 80.))
-            }
+            // if ui
+            //     .add(egui::Button::new(egui::RichText::new("Complement")))
+            //     .clicked()
+            // {
+            //     self.pallette.add_complementary(c);
+            // }
+            // if ui
+            //     .add(egui::Button::new(egui::RichText::new("Similar")))
+            //     .clicked()
+            // {
+            //     self.similar = Some(Similar::new_similar(c, &self.pallette.all_entries, 10, 80.))
+            // }
         });
     }
 

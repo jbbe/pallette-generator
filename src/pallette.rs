@@ -161,9 +161,13 @@ impl Pallette {
     
     pub fn add_complementary(&mut self, c: Rgb<u8>) {
         let complement = Rgb([255- c[0], 255 - c[1], 255 - c[2]]);
+        self.add_new_color(complement);
+    }
+
+    pub fn add_new_color(&mut self, c: Rgb<u8>) {
         self.pallette_size += 1;
-        self.top_rgb.push(complement);
-        self.top_hex.push(Self::rgb_to_hex(complement));
+        self.top_rgb.push(c);
+        self.top_hex.push(Self::rgb_to_hex(c));
     }
 
     pub fn extract_pallete(path: &str) -> Option<HashMap<Rgb<u8>, usize>> {
