@@ -6,7 +6,7 @@ mod color;
 mod pallette;
 mod similar;
 use egui::ColorImage;
-use image::{DynamicImage, RgbaImage};
+use image::{DynamicImage, Rgb, RgbaImage};
 use pallette::Pallette;
 
 use crate::similar::Similar;
@@ -187,7 +187,6 @@ impl PalletteApp {
     }
 
     fn pallette_panel(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        let pallette_button_size = egui::vec2(100., 100.);
         // Create a grid and add items to it
         ui.horizontal(|ui| {
             ui.set_min_height(500.);
@@ -197,45 +196,7 @@ impl PalletteApp {
                     ui.set_min_height(500.);
                     egui::Grid::new("Image Pallette").show(ui, |ui| {
                         for i in 0..self.pallette.top_rgb.len() {
-                            let c = self.pallette.top_rgb[i];
-                            let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
-                            let hex = &self.pallette.top_hex[i];
-                            if ui
-                                .add_sized(
-                                    pallette_button_size,
-                                    egui::Button::new(egui::RichText::new(hex))
-                                        .fill(color)
-                                        .sense(egui::Sense::click()),
-                                )
-                                .clicked()
-                            {
-                                ctx.copy_text(hex.to_owned());
-                            }
-                            ui.vertical(|ui| {
-                                if ui
-                                    .add(egui::Button::new(egui::RichText::new("Swap")))
-                                    .clicked()
-                                {
-                                    self.pallette.swap_top_color(i);
-                                }
-                                if ui
-                                    .add(egui::Button::new(egui::RichText::new("Complement")))
-                                    .clicked()
-                                {
-                                    self.pallette.add_complementary(c);
-                                }
-                                if ui
-                                    .add(egui::Button::new(egui::RichText::new("Similar")))
-                                    .clicked()
-                                {
-                                    self.similar = Some(Similar::new_similar(
-                                        c,
-                                        &self.pallette.all_entries,
-                                        10,
-                                        80.,
-                                    ))
-                                }
-                            });
+                            self.pallette_color(ui, ctx, i);
                             if (i + 1) % num_columns == 0 {
                                 ui.end_row(); // End the row after the specified number of columns
                             }
@@ -246,6 +207,44 @@ impl PalletteApp {
         });
     }
 
+    fn pallette_color(&mut self, ui: &mut egui::Ui, ctx: &egui::Context, i: usize) {
+        let pallette_button_size = egui::vec2(100., 100.);
+        let c = self.pallette.top_rgb[i];
+        let hex = &self.pallette.top_hex[i];
+        let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
+        if ui
+            .add_sized(
+                pallette_button_size,
+                egui::Button::new(egui::RichText::new(hex))
+                    .fill(color)
+                    .sense(egui::Sense::click()),
+            )
+            .clicked()
+        {
+            ctx.copy_text(hex.to_owned());
+        }
+        ui.vertical(|ui| {
+            ui.set_min_width(90.);
+            if ui
+                .add(egui::Button::new(egui::RichText::new("Swap")))
+                .clicked()
+            {
+                self.pallette.swap_top_color(i);
+            }
+            if ui
+                .add(egui::Button::new(egui::RichText::new("Complement")))
+                .clicked()
+            {
+                self.pallette.add_complementary(c);
+            }
+            if ui
+                .add(egui::Button::new(egui::RichText::new("Similar")))
+                .clicked()
+            {
+                self.similar = Some(Similar::new_similar(c, &self.pallette.all_entries, 10, 80.))
+            }
+        });
+    }
 
     fn pallette_control_buttons(&mut self, ui: &mut egui::Ui) {
         let p_size = self.pallette.pallette_size;
