@@ -208,7 +208,6 @@ impl PalletteApp {
                                 ui.end_row(); // End the row after the specified number of columns
                             }
                         }
-                        self.add_color(ui);
                     });
                 });
             })

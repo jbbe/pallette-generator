@@ -1,6 +1,8 @@
 highlight on image on color hover
 center image
 limit filepicker extensions
+pallette without source image
+
 
 done
 
