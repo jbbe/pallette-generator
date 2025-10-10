@@ -9,7 +9,7 @@ use egui::ColorImage;
 use image::{DynamicImage, Rgb, RgbaImage};
 use pallette::Pallette;
 
-use crate::similar::Similar;
+use crate::{similar::Similar};
 
 fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).

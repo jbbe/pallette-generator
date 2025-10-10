@@ -1,6 +1,6 @@
 use image::Rgb;
 
-use crate::pallette::Pallette;
+use crate::color::ColorUtil;
 
 // enum SimilarType {
 //     Distance,
@@ -22,7 +22,7 @@ impl Similar {
     ) -> Self {
         let mut similar_colors: Vec<(Rgb<u8>, usize, f32)> = Vec::new();
         for color in all_colors {
-            let d = Pallette::color_distance(c, color.0);
+            let d = ColorUtil::color_distance(c, color.0);
             if d < similar_threshold {
                 similar_colors.push((color.0, color.1, d));
             }
