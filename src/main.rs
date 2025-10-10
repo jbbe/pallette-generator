@@ -42,6 +42,7 @@ struct PalletteApp {
     pallette_name: String,
     texture_id: Option<egui::TextureHandle>,
     similar: Option<Similar>,
+    panel_width: f32
 }
 
 impl Default for PalletteApp {
@@ -53,6 +54,7 @@ impl Default for PalletteApp {
             pallette_name: "New Pallette".to_string(),
             texture_id: None,
             similar: None,
+            panel_width: 400.
         }
     }
 }
@@ -60,23 +62,13 @@ impl Default for PalletteApp {
 impl eframe::App for PalletteApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
+            self.panel_width = (ui.available_width() - 20.0) / 2.0;
             ui.horizontal(|ui| {
                 ui.group(|ui| {
-                    ui.set_min_size(egui::Vec2::new(500., 700.));
+                    ui.set_min_size(egui::Vec2::new(self.panel_width, 700.));
                     ui.vertical(|ui| match self.app_state {
                         AppState::NoFile => {
-                            ui.centered_and_justified(|ui| {
-                                self.file_picker(ui);
-                                // Collect dropped files:
-                                ctx.input(|i| {
-                                    if !i.raw.dropped_files.is_empty() {
-                                        if let Some(f_path) = &i.raw.dropped_files[0].path {
-                                            self.picked_path = Some(f_path.display().to_string())
-                                        }
-                                        self.app_state = AppState::FileSelected;
-                                    }
-                                });
-                            });
+                            self.no_file_view(ui, ctx);
                         }
                         AppState::FileSelected => {
                             self.file_info(ui, ctx);
@@ -93,8 +85,12 @@ impl eframe::App for PalletteApp {
                         }
                     });
                 });
-                self.image_panel(ui);
-            })
+                ui.add_space(20.);
+                ui.group(|ui| {
+                    ui.set_min_size(egui::Vec2::new(self.panel_width, 700.0));
+                    self.image_panel(ui);
+                });
+            });
         });
 
         preview_files_being_dropped(ctx);
@@ -106,6 +102,22 @@ impl PalletteApp {
     //     self.pallette.update_color(original, new_color);
     //     self.similar = None
     // }
+    fn no_file_view(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        // ui.centered_and_justified(|ui| {
+        ui.vertical_centered(|ui| {
+            ui.set_min_width(400.);
+            self.file_picker(ui);
+            // Collect dropped files:
+            ctx.input(|i| {
+                if !i.raw.dropped_files.is_empty() {
+                    if let Some(f_path) = &i.raw.dropped_files[0].path {
+                        self.picked_path = Some(f_path.display().to_string())
+                    }
+                    self.app_state = AppState::FileSelected;
+                }
+            });
+        });
+    }
 
     fn similar_selector(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         let mut show_close = false;
@@ -165,7 +177,10 @@ impl PalletteApp {
                 });
         }
         if show_close {
-            if ui.add(egui::Button::new(egui::RichText::new("Close"))).clicked() {
+            if ui
+                .add(egui::Button::new(egui::RichText::new("Close")))
+                .clicked()
+            {
                 self.similar = None;
             }
         }
@@ -206,7 +221,12 @@ impl PalletteApp {
                                 .add(egui::Button::new(egui::RichText::new("Similar")))
                                 .clicked()
                             {
-                                self.similar = Some(Similar::new(c, &self.pallette.all_entries, 10))
+                                self.similar = Some(Similar::new_similar(
+                                    c,
+                                    &self.pallette.all_entries,
+                                    10,
+                                    80.,
+                                ))
                             }
                             if (i + 1) % num_columns == 0 {
                                 ui.end_row(); // End the row after the specified number of columns
@@ -284,9 +304,10 @@ impl PalletteApp {
     }
 
     fn image_panel(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            ui.set_min_width(400.);
-            ui.centered_and_justified(|ui| match self.app_state {
+        ui.vertical_centered(|ui| {
+            ui.set_min_width(self.panel_width);
+            // ui.centered_and_justified(|ui|
+            match self.app_state {
                 AppState::NoFile => {
                     ui.set_min_size(egui::Vec2::new(200., 200.));
                     ui.image(egui::include_image!("assets/pallette.svg"));
@@ -301,10 +322,11 @@ impl PalletteApp {
                         }
                     });
                 }
-            });
+            }
         });
     }
 }
+
 // Function to load an image and return it as an Rgba image
 fn load_image(path: &str) -> Result<DynamicImage, Box<dyn std::error::Error>> {
     let img = image::open(std::path::Path::new(path))?;
