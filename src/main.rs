@@ -31,13 +31,20 @@ fn main() -> eframe::Result {
 }
 
 enum AppState {
-    NoFile,
-    FileSelected,
+    NoPallette,
+    // FileSelected,
+    PalletteFromImgGenerated,
     PalletteGenerated,
+}
+
+enum SourceFileState {
+    NoFile,
+    File
 }
 
 struct PalletteApp {
     app_state: AppState,
+    source_file_state: SourceFileState,
     picked_path: Option<String>,
     pallette: Pallette,
     pallette_name: String,
@@ -52,7 +59,8 @@ struct PalletteApp {
 impl Default for PalletteApp {
     fn default() -> Self {
         Self {
-            app_state: AppState::NoFile,
+            app_state: AppState::NoPallette,
+            source_file_state: SourceFileState::NoFile,
             picked_path: None,
             pallette: Pallette::default(),
             pallette_name: "New Pallette".to_string(),
@@ -74,13 +82,13 @@ impl eframe::App for PalletteApp {
                 ui.group(|ui| {
                     ui.set_min_size(egui::Vec2::new(self.panel_width, 700.));
                     ui.vertical(|ui| match self.app_state {
-                        AppState::NoFile => {
+                        AppState::NoPallette => {
                             self.no_file_view(ui, ctx);
                         }
-                        AppState::FileSelected => {
-                            self.file_info(ui, ctx);
-                        }
-                        AppState::PalletteGenerated => {
+                        // AppState::FileSelected => {
+                        //     self.file_info(ui, ctx);
+                        // }
+                        AppState::PalletteGenerated | AppState::PalletteFromImgGenerated => {
                             self.pallette_control_buttons(ui);
                             self.pallette_panel(ui, ctx);
                             self.color_options_panel(ui, ctx);
@@ -115,9 +123,10 @@ impl PalletteApp {
             ctx.input(|i| {
                 if !i.raw.dropped_files.is_empty() {
                     if let Some(f_path) = &i.raw.dropped_files[0].path {
-                        self.picked_path = Some(f_path.display().to_string())
+                        self.picked_path = Some(f_path.display().to_string());
+                        self.
+                        self.source_file_state = SourceFileState::File;
                     }
-                    self.app_state = AppState::FileSelected;
                 }
             });
         });
@@ -330,29 +339,30 @@ impl PalletteApp {
             println!("reset");
             self.pallette.reset();
             self.picked_path = None;
-            self.app_state = AppState::NoFile;
+            self.app_state = AppState::NoPallette;
+            self.source_file_state = SourceFileState::File;
             self.texture_id = None;
             self.similar = None
         }
     }
 
-    fn file_info(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        if let Some(picked_path) = &self.picked_path {
-            if let Ok(img) = load_image(picked_path) {
-                let color_image = convert_img_for_display(img);
-                self.texture_id =
-                    Some(ctx.load_texture("my_image", color_image, Default::default()));
-            }
-            ui.horizontal(|ui| {
-                ui.label("Picked file:");
-                ui.monospace(picked_path);
-            });
-            if ui.button("Extract Pallette").clicked() {
-                self.pallette.update(picked_path);
-                self.app_state = AppState::PalletteGenerated;
-            }
-        }
-    }
+    // fn file_info(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+    //     if let Some(picked_path) = &self.picked_path {
+    //         if let Ok(img) = load_image(picked_path) {
+    //             let color_image = convert_img_for_display(img);
+    //             self.texture_id =
+    //                 Some(ctx.load_texture("my_image", color_image, Default::default()));
+    //         }
+    //         ui.horizontal(|ui| {
+    //             ui.label("Picked file:");
+    //             ui.monospace(picked_path);
+    //         });
+    //         if ui.button("Extract Pallette").clicked() {
+    //             self.pallette.update(picked_path);
+    //             self.app_state = AppState::PalletteGenerated;
+    //         }
+    //     }
+    // }
     fn file_picker(&mut self, ui: &mut egui::Ui) {
         if self.picked_path.is_none() {
             ui.label("Drag and drop a file to create a pallette");
@@ -370,12 +380,12 @@ impl PalletteApp {
         ui.vertical_centered(|ui| {
             ui.set_min_width(self.panel_width);
             // ui.centered_and_justified(|ui|
-            match self.app_state {
-                AppState::NoFile => {
+            match self.source_file_state {
+                SourceFileState::NoFile => {
                     ui.set_min_size(egui::Vec2::new(200., 200.));
                     ui.image(egui::include_image!("assets/pallette.svg"));
                 }
-                AppState::FileSelected | AppState::PalletteGenerated => {
+                SourceFileState::FileSelected | AppState::PalletteGenerated => {
                     ui.horizontal(|ui| {
                         if let Some(texture_id) = &self.texture_id {
                             let desired_size = egui::vec2(400.0, 500.0);
