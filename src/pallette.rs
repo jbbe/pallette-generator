@@ -43,16 +43,10 @@ impl Pallette {
         let (tx, rx) = mpsc::channel();
         thread::spawn(move || {
             // let p= path.to_string();
-            println!("in thread {p}");
             tx.send(Self::extract_pallete(&p).unwrap())
         });
 
         let map = rx.recv().unwrap();
-        // println!("Got: {received}");
-        // let s = map.size
-        println!("map received ");
-
-        // let full_pallette = extract_pallete(pal_name, &file_path).unwrap();
         self.all_entries = Self::get_sorted_entries(map);
         if self.all_entries.len() < self.pallette_size {
             self.pallette_size = self.all_entries.len()

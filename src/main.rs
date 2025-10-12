@@ -32,7 +32,6 @@ fn main() -> eframe::Result {
 
 enum AppState {
     NoPallette,
-    // FileSelected,
     PalletteFromImgGenerated,
     PalletteGenerated,
 }
@@ -51,11 +50,11 @@ struct PalletteApp {
     texture_id: Option<egui::TextureHandle>,
     similar: Option<Similar>,
     panel_width: f32,
-    pallette_button_size: egui::Vec2,
-    show_details: Option<usize>,
+    show_details: Option<(usize, ColorDetail)>,
     new_color: ColorDetail,
 }
 
+const PALLETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
 impl Default for PalletteApp {
     fn default() -> Self {
         Self {
@@ -67,7 +66,7 @@ impl Default for PalletteApp {
             texture_id: None,
             similar: None,
             panel_width: 400.,
-            pallette_button_size: egui::vec2(100., 100.),
+            // pallette_button_size: egui::vec2(100., 100.),
             show_details: None,
             new_color: ColorDetail::default(),
         }
@@ -145,20 +144,10 @@ impl PalletteApp {
         let mut show_close = false;
         if let Some(sim) = &self.similar {
             show_close = true;
-            let pallette_button_size = egui::vec2(100., 100.);
             let c = sim.color;
             let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
             let hex = ColorUtil::rgb_to_hex(c);
-            // sim.similar_colors
-            if ui
-                .add_sized(
-                    pallette_button_size,
-                    egui::Button::new(egui::RichText::new(hex))
-                        .fill(color)
-                        .sense(egui::Sense::click()),
-                )
-                .clicked()
-            {
+            if Self::color_button(ui, color, &hex).clicked() {
                 let hex = ColorUtil::rgb_to_hex(c);
                 // println!("Copy {hex}");
                 ctx.copy_text(hex.to_owned());
@@ -167,21 +156,13 @@ impl PalletteApp {
                 .max_width(600.)
                 .show(ui, |ui| {
                     egui::Grid::new("Similar Colors").show(ui, |ui| {
-                        let pallette_button_size = egui::vec2(100., 100.);
+                        // let PALLETTE_BUTTON_SIZE = egui::vec2(100., 100.);
                         // for i in 0..sim.similar_colors.len() {
                         for entry in sim.similar_colors.iter() {
                             let c = entry.0;
                             let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
                             let hex = ColorUtil::rgb_to_hex(c);
-                            if ui
-                                .add_sized(
-                                    pallette_button_size,
-                                    egui::Button::new(egui::RichText::new(hex))
-                                        .fill(color)
-                                        .sense(egui::Sense::click()),
-                                )
-                                .clicked()
-                            {
+                            if Self::color_button(ui, color, &hex).clicked() {
                                 let hex = ColorUtil::rgb_to_hex(c);
                                 // println!("Copy {hex}");
                                 ctx.copy_text(hex.to_owned());
@@ -236,19 +217,23 @@ impl PalletteApp {
     }
 
     fn color_options_panel(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        if let Some(idx) = self.show_details {
-            let c = self.pallette.top_rgb[idx];
+        if let Some((_idx, detail)) = &self.show_details {
             if ui
                 .add(egui::Button::new(egui::RichText::new("Complement")))
                 .clicked()
             {
-                self.pallette.add_complementary(c);
+                self.pallette.add_new_color(detail.complement);
             }
             if ui
                 .add(egui::Button::new(egui::RichText::new("Similar")))
                 .clicked()
             {
-                self.similar = Some(Similar::new_similar(c, &self.pallette.all_entries, 10, 80.))
+                self.similar = Some(Similar::new_similar(
+                    detail.color,
+                    &self.pallette.all_entries,
+                    10,
+                    80.,
+                ))
             }
         } else {
             self.add_color(ui, ctx);
@@ -259,16 +244,7 @@ impl PalletteApp {
         ui.label("Add Color");
         ui.color_edit_button_srgba(&mut self.new_color.egui_color);
         // ToDo Update rest of color info on color change
-        if ui
-            .add_sized(
-                self.pallette_button_size,
-                egui::Button::new(egui::RichText::new("Add"))
-                    .fill(self.new_color.egui_color)
-                    .sense(egui::Sense::click()),
-            )
-            .clicked()
-        {
-            // let new_col = Rgb([self.new_color.r(), self.new_color.g(), self.new_color.b()]);
+        if Self::color_button(ui, self.new_color.egui_color, "Add").clicked() {
             self.pallette.add_new_color(self.new_color.color);
         }
 
@@ -281,19 +257,11 @@ impl PalletteApp {
     }
 
     fn pallette_color(&mut self, ui: &mut egui::Ui, ctx: &egui::Context, i: usize) {
-        // let pallette_button_size = ;
         let c = self.pallette.top_rgb[i];
         let hex = &self.pallette.top_hex[i];
         let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
-        if ui
-            .add_sized(
-                self.pallette_button_size,
-                egui::Button::new(egui::RichText::new(hex))
-                    .fill(color)
-                    .sense(egui::Sense::click()),
-            )
-            .clicked()
-        {
+
+        if Self::color_button(ui, color, hex).clicked() {
             ctx.copy_text(hex.to_owned());
         }
         ui.vertical(|ui| {
@@ -308,21 +276,19 @@ impl PalletteApp {
                 .add(egui::Button::new(egui::RichText::new("Options")))
                 .clicked()
             {
-                self.show_details = Some(i);
+                let t = (i, ColorDetail::new(self.pallette.top_rgb[i]));
+                self.show_details = Some(t);
             }
-            // if ui
-            //     .add(egui::Button::new(egui::RichText::new("Complement")))
-            //     .clicked()
-            // {
-            //     self.pallette.add_complementary(c);
-            // }
-            // if ui
-            //     .add(egui::Button::new(egui::RichText::new("Similar")))
-            //     .clicked()
-            // {
-            //     self.similar = Some(Similar::new_similar(c, &self.pallette.all_entries, 10, 80.))
-            // }
         });
+    }
+
+    fn color_button(ui: &mut egui::Ui, color: egui::Color32, text: &str) -> egui::Response {
+        ui.add_sized(
+            PALLETTE_BUTTON_SIZE,
+            egui::Button::new(egui::RichText::new(text))
+                .fill(color)
+                .sense(egui::Sense::click()),
+        )
     }
 
     fn pallette_control_buttons(&mut self, ui: &mut egui::Ui) {
@@ -361,23 +327,6 @@ impl PalletteApp {
         }
     }
 
-    // fn file_info(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-    //     if let Some(picked_path) = &self.picked_path {
-    //         if let Ok(img) = load_image(picked_path) {
-    //             let color_image = convert_img_for_display(img);
-    //             self.texture_id =
-    //                 Some(ctx.load_texture("my_image", color_image, Default::default()));
-    //         }
-    //         ui.horizontal(|ui| {
-    //             ui.label("Picked file:");
-    //             ui.monospace(picked_path);
-    //         });
-    //         if ui.button("Extract Pallette").clicked() {
-    //             self.pallette.update(picked_path);
-    //             self.app_state = AppState::PalletteGenerated;
-    //         }
-    //     }
-    // }
     fn file_picker(&mut self, ui: &mut egui::Ui) {
         if self.picked_path.is_none() {
             ui.label("Drag and drop a file to create a pallette");
@@ -427,7 +376,7 @@ impl PalletteApp {
                                     self.app_state = AppState::PalletteGenerated;
                                 }
                             }
-                         }
+                        }
                     });
                 }
             }
