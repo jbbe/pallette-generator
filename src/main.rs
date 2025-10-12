@@ -7,7 +7,7 @@ mod color_detail;
 mod pallette;
 mod similar;
 use egui::ColorImage;
-use image::{DynamicImage, Rgb, RgbaImage};
+use image::{DynamicImage, RgbaImage};
 use pallette::Pallette;
 
 use crate::{color::ColorUtil, color_detail::ColorDetail, similar::Similar};
@@ -116,7 +116,7 @@ impl PalletteApp {
             SourceFileState::File => {
                 if let Some(picked_path) = &self.picked_path {
                     self.pallette.update(picked_path);
-                    self.app_state = AppState::PalletteGenerated;
+                    self.app_state = AppState::PalletteFromImgGenerated;
                 }
             }
         }
@@ -135,6 +135,14 @@ impl PalletteApp {
                 }
             });
         });
+
+        if ui
+            .add(egui::Button::new(egui::RichText::new("New Pallette")))
+            .clicked()
+        {
+            self.pallette = Pallette::rand_pallette();
+            self.app_state = AppState::PalletteGenerated;
+        }
     }
 
     fn similar_selector(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
@@ -213,18 +221,44 @@ impl PalletteApp {
 
     fn color_options_panel(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         if let Some((_idx, detail)) = &self.show_details {
-            ui.vertical(|ui| {
-                ui.label("Complement");
-                if Self::color_button(ui, detail.compliment_egui, &detail.complement_hex).clicked()
-                {
-                    ctx.copy_text(detail.complement_hex.to_owned());
-                }
+            ui.horizontal(|ui| {
+                ui.vertical(|ui| {
+                    ui.label("Color");
+                    if Self::color_button(ui, detail.egui_color, &detail.hex).clicked() {
+                        ctx.copy_text(detail.hex.to_owned());
+                    }
+                    if ui
+                        .add(egui::Button::new(egui::RichText::new("Add")))
+                        .clicked()
+                    {
+                        println!("clicking this does nothing")
+                    }
+                });
                 if ui
-                    .add(egui::Button::new(egui::RichText::new("Add")))
+                    .add(egui::Button::new(egui::RichText::new("Similar")))
                     .clicked()
                 {
-                    self.pallette.add_new_color(detail.complement);
+                    self.similar = Some(Similar::new_similar(
+                        detail.color,
+                        &self.pallette.all_entries,
+                        10,
+                        80.,
+                    ))
                 }
+                ui.vertical(|ui| {
+                    ui.label("Complement");
+                    if Self::color_button(ui, detail.compliment_egui, &detail.complement_hex)
+                        .clicked()
+                    {
+                        ctx.copy_text(detail.complement_hex.to_owned());
+                    }
+                    if ui
+                        .add(egui::Button::new(egui::RichText::new("Add")))
+                        .clicked()
+                    {
+                        self.pallette.add_new_color(detail.complement);
+                    }
+                });
             });
             if ui
                 .add(egui::Button::new(egui::RichText::new("Similar")))

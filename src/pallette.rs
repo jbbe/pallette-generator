@@ -30,6 +30,27 @@ impl Default for Pallette {
 }
 
 impl Pallette {
+    pub fn rand_pallette() -> Pallette {
+        let pallette_size = 16;
+        let mut top_rgb = Vec::new();
+        let mut top_hex = Vec::new();
+        let mut all_entries = Vec::new();
+        for _ in 0..pallette_size {
+            let c = ColorUtil::rand_color();
+            top_rgb.push(c);
+            top_hex.push(ColorUtil::rgb_to_hex(c));
+            all_entries.push((c, 1));
+        }
+
+        Self {
+            pallette_size,
+            top_rgb,
+            top_hex,
+            all_entries,
+            current_path: None,
+        }
+    }
+
     pub fn update(&mut self, path: &str) {
         if let Some(cur) = &self.current_path {
             // Return early if they are the same
