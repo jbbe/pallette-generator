@@ -88,10 +88,10 @@ enum Command {
 
 
 impl eframe::App for WrapApp {
-    #[cfg(feature = "persistence")]
-    fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, eframe::APP_KEY, &self.state);
-    }
+    // #[cfg(feature = "persistence")]
+    // fn save(&mut self, storage: &mut dyn eframe::Storage) {
+    //     eframe::set_value(storage, eframe::APP_KEY, &self.state);
+    // }
 
     fn clear_color(&self, visuals: &egui::Visuals) -> [f32; 4] {
         // Give the area behind the floating windows a different color, because it looks better:
@@ -217,7 +217,7 @@ impl WrapApp {
         }
     }
 
-    fn bar_contents(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame, cmd: &mut Command) {
+    fn bar_contents(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame, _cmd: &mut Command) {
         egui::widgets::global_theme_preference_switch(ui);
 
         ui.separator();

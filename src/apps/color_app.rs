@@ -2,7 +2,7 @@
 use eframe::egui;
 
 
-use crate::{core::pallette::Pallette, core::color::ColorUtil, core::color_detail::ColorDetail, core::similar::Similar};
+use crate::core::color_detail::ColorDetail;
 
 // enum AppState {
 //     NoPallette,

@@ -8,7 +8,7 @@ mod apps;
 mod debug;
 use apps::WrapApp;
 
-use crate::debug::backend_panel;
+// use crate::debug::backend_panel;
 
 fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -31,8 +31,8 @@ fn main() -> eframe::Result {
             .with_inner_size([1280.0, 1024.0])
             .with_drag_and_drop(true),
 
-        #[cfg(feature = "wgpu")]
-        renderer: eframe::Renderer::Wgpu,
+        // #[cfg(feature = "wgpu")]
+        // renderer: eframe::Renderer::Wgpu,
 
         ..Default::default()
     };
