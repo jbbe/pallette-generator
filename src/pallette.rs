@@ -106,10 +106,17 @@ impl Pallette {
 
     pub fn swap_top_color(&mut self, idx: usize) {
         println!("Swap top color {idx}");
-        let e = self.get_unused_entry();
-        // println!("Swap top color {idx}");
-        if let Some(c) = e {
-            self.top_rgb[idx] = c
+        if self.current_path.is_none() {
+            let c = ColorUtil::rand_color();
+            self.top_rgb[idx] = c;
+            self.top_hex[idx] = ColorUtil::rgb_to_hex(c);
+        } else {
+            let e = self.get_unused_entry();
+            // println!("Swap top color {idx}");
+            if let Some(c) = e {
+                self.top_rgb[idx] = c;
+                self.top_hex[idx] = ColorUtil::rgb_to_hex(c);
+            }
         }
     }
 
