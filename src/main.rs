@@ -84,9 +84,6 @@ impl eframe::App for PalletteApp {
                         AppState::NoPallette => {
                             self.no_file_view(ui, ctx);
                         }
-                        // AppState::FileSelected => {
-                        //     self.file_info(ui, ctx);
-                        // }
                         AppState::PalletteGenerated | AppState::PalletteFromImgGenerated => {
                             self.pallette_control_buttons(ui);
                             self.pallette_panel(ui, ctx);
@@ -156,8 +153,6 @@ impl PalletteApp {
                 .max_width(600.)
                 .show(ui, |ui| {
                     egui::Grid::new("Similar Colors").show(ui, |ui| {
-                        // let PALLETTE_BUTTON_SIZE = egui::vec2(100., 100.);
-                        // for i in 0..sim.similar_colors.len() {
                         for entry in sim.similar_colors.iter() {
                             let c = entry.0;
                             let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
@@ -245,13 +240,16 @@ impl PalletteApp {
         ui.color_edit_button_srgba(&mut self.new_color.egui_color);
         // ToDo Update rest of color info on color change
         if Self::color_button(ui, self.new_color.egui_color, "Add").clicked() {
+            self.new_color.update_from_egui_color();
             self.pallette.add_new_color(self.new_color.color);
+            self.new_color = ColorDetail::default();
         }
 
         if ui
             .add(egui::Button::new(egui::RichText::new("Copy")))
             .clicked()
         {
+            self.new_color.update_from_egui_color();
             ctx.copy_text(self.new_color.hex.to_owned());
         }
     }

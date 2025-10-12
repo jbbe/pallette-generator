@@ -28,4 +28,15 @@ impl ColorDetail {
         let c = ColorUtil::rand_color();
         Self::new(c)
     }
+
+    pub fn update_from_egui_color(&mut self) {
+        if self.egui_color.r() != self.color[0] ||
+            self.egui_color.g() != self.color[1] ||
+            self.egui_color.b() != self.color[2]
+         {
+            self.color = Rgb([self.egui_color.r(), self.egui_color.g(), self.egui_color.b()]);
+            self.hex = ColorUtil::rgb_to_hex(self.color);
+
+        }
+    }
 }
