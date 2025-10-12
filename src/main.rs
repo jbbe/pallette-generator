@@ -2,15 +2,12 @@
 #![allow(rustdoc::missing_crate_level_docs)] // it's an example
 use eframe::egui;
 
-mod color;
-mod color_detail;
-mod pallette;
-mod similar;
+mod core;
 use egui::ColorImage;
 use image::{DynamicImage, RgbaImage};
-use pallette::Pallette;
+use core::pallette::Pallette;
 
-use crate::{color::ColorUtil, color_detail::ColorDetail, similar::Similar};
+use crate::{core::color::ColorUtil, core::color_detail::ColorDetail, core::similar::Similar};
 
 fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -66,7 +63,6 @@ impl Default for PalletteApp {
             texture_id: None,
             similar: None,
             panel_width: 400.,
-            // pallette_button_size: egui::vec2(100., 100.),
             show_details: None,
             new_color: ColorDetail::default(),
         }
@@ -126,23 +122,23 @@ impl PalletteApp {
             self.file_picker(ui);
             // Collect dropped files:
             ctx.input(|i| {
-                if !i.raw.dropped_files.is_empty() {
-                    if let Some(f_path) = &i.raw.dropped_files[0].path {
-                        self.picked_path = Some(f_path.display().to_string());
-                        // self.
-                        self.source_file_state = SourceFileState::File;
-                    }
+                if !i.raw.dropped_files.is_empty()
+                    && let Some(f_path) = &i.raw.dropped_files[0].path
+                {
+                    self.picked_path = Some(f_path.display().to_string());
+                    // self.
+                    self.source_file_state = SourceFileState::File;
                 }
             });
-        });
 
-        if ui
-            .add(egui::Button::new(egui::RichText::new("New Pallette")))
-            .clicked()
-        {
-            self.pallette = Pallette::rand_pallette();
-            self.app_state = AppState::PalletteGenerated;
-        }
+            if ui
+                .add(egui::Button::new(egui::RichText::new("New Pallette")))
+                .clicked()
+            {
+                self.pallette = Pallette::rand_pallette();
+                self.app_state = AppState::PalletteGenerated;
+            }
+        });
     }
 
     fn similar_selector(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
@@ -188,13 +184,12 @@ impl PalletteApp {
                     });
                 });
         }
-        if show_close {
-            if ui
+        if show_close
+            && ui
                 .add(egui::Button::new(egui::RichText::new("Close")))
                 .clicked()
-            {
-                self.similar = None;
-            }
+        {
+            self.similar = None;
         }
     }
 

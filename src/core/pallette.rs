@@ -7,7 +7,7 @@ use std::io::{self, Write};
 use std::sync::mpsc;
 use std::thread;
 
-use crate::color::ColorUtil;
+use crate::core::color::ColorUtil;
 
 pub(crate) struct Pallette {
     pub top_rgb: Vec<Rgb<u8>>,

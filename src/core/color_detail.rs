@@ -1,6 +1,6 @@
 use image::Rgb;
 
-use crate::color::ColorUtil;
+use crate::core::color::ColorUtil;
 
 pub (crate)struct ColorDetail {
     pub egui_color: egui::Color32,
