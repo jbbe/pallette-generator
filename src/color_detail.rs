@@ -2,12 +2,11 @@ use image::Rgb;
 
 use crate::color::ColorUtil;
 
-
-
 pub (crate)struct ColorDetail {
     pub egui_color: egui::Color32,
     pub color: Rgb<u8>,
     pub hex: String,
+    pub compliment_egui: egui::Color32,
     pub complement: Rgb<u8>,
     pub complement_hex: String
 }
@@ -20,7 +19,8 @@ impl ColorDetail {
             hex: ColorUtil::rgb_to_hex(c),
             complement,
             complement_hex: ColorUtil::rgb_to_hex(complement),
-            egui_color: egui::Color32::from_rgb(c[0], c[1], c[2])
+            egui_color: egui::Color32::from_rgb(c[0], c[1], c[2]),
+            compliment_egui: egui::Color32::from_rgb(complement[0], complement[1], complement[2])
         }
     }
 

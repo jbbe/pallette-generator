@@ -213,12 +213,19 @@ impl PalletteApp {
 
     fn color_options_panel(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         if let Some((_idx, detail)) = &self.show_details {
-            if ui
-                .add(egui::Button::new(egui::RichText::new("Complement")))
-                .clicked()
-            {
-                self.pallette.add_new_color(detail.complement);
-            }
+            ui.vertical(|ui| {
+                ui.label("Complement");
+                if Self::color_button(ui, detail.compliment_egui, &detail.complement_hex).clicked()
+                {
+                    ctx.copy_text(detail.complement_hex.to_owned());
+                }
+                if ui
+                    .add(egui::Button::new(egui::RichText::new("Add")))
+                    .clicked()
+                {
+                    self.pallette.add_new_color(detail.complement);
+                }
+            });
             if ui
                 .add(egui::Button::new(egui::RichText::new("Similar")))
                 .clicked()
