@@ -9,15 +9,15 @@ use crate::apps::{ColorApp, PalletteApp};
 use crate::debug::backend_panel;
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+// #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum Anchor {
     #[default]
     PalletteEditor,
     ColorEditor,
 }
 #[derive(Default)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(default))]
+// #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+// #[cfg_attr(feature = "serde", serde(default))]
 pub struct State {
     pallette_app: PalletteApp,
     color_app: ColorApp,
