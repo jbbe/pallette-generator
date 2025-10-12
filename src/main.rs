@@ -115,6 +115,15 @@ impl eframe::App for PalletteApp {
 
 impl PalletteApp {
     fn no_file_view(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        match self.source_file_state {
+            SourceFileState::NoFile => (),
+            SourceFileState::File => {
+                if let Some(picked_path) = &self.picked_path {
+                    self.pallette.update(picked_path);
+                    self.app_state = AppState::PalletteGenerated;
+                }
+            }
+        }
         // ui.centered_and_justified(|ui| {
         ui.vertical_centered(|ui| {
             ui.set_min_width(400.);
