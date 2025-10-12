@@ -427,7 +427,7 @@ impl PalletteApp {
                                     self.app_state = AppState::PalletteGenerated;
                                 }
                             }
-                        }
+                         }
                     });
                 }
             }

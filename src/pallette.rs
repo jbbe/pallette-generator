@@ -4,9 +4,10 @@ use rand::seq::SliceRandom; // For shuffling the array
 use raqote::*;
 use std::collections::HashMap;
 use std::io::{self, Write};
+use std::sync::mpsc;
+use std::thread;
 
 use crate::color::ColorUtil;
-
 
 pub(crate) struct Pallette {
     pub top_rgb: Vec<Rgb<u8>>,
@@ -37,7 +38,19 @@ impl Pallette {
             }
         }
         self.current_path = Some(path.to_string());
-        let map = Self::extract_pallete(&self.current_path.clone().unwrap()).unwrap();
+        let p = path.to_string().clone();
+
+        let (tx, rx) = mpsc::channel();
+        thread::spawn(move || {
+            // let p= path.to_string();
+            println!("in thread {p}");
+            tx.send(Self::extract_pallete(&p).unwrap())
+        });
+
+        let map = rx.recv().unwrap();
+        // println!("Got: {received}");
+        // let s = map.size
+        println!("map received ");
 
         // let full_pallette = extract_pallete(pal_name, &file_path).unwrap();
         self.all_entries = Self::get_sorted_entries(map);
@@ -117,7 +130,6 @@ impl Pallette {
         self.pallette_size = 16;
     }
 
-
     fn get_sorted_entries(pallette: HashMap<Rgb<u8>, usize>) -> Vec<(Rgb<u8>, usize)> {
         let mut entries: Vec<(Rgb<u8>, usize)> = pallette.into_iter().collect();
 
@@ -126,7 +138,10 @@ impl Pallette {
         entries
     }
 
-    pub fn get_top_colors(entries: Vec<(Rgb<u8>, usize)>, top_n: usize) -> (Vec<Rgb<u8>>, Vec<String>) {
+    pub fn get_top_colors(
+        entries: Vec<(Rgb<u8>, usize)>,
+        top_n: usize,
+    ) -> (Vec<Rgb<u8>>, Vec<String>) {
         let mut top_rgb = Vec::new();
         let mut top_hex = Vec::new();
         for e in entries {
@@ -157,9 +172,9 @@ impl Pallette {
             }
         }
     }
-    
+
     pub fn add_complementary(&mut self, c: Rgb<u8>) {
-        let complement = Rgb([255- c[0], 255 - c[1], 255 - c[2]]);
+        let complement = Rgb([255 - c[0], 255 - c[1], 255 - c[2]]);
         self.add_new_color(complement);
     }
 
