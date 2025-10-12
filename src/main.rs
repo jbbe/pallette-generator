@@ -185,6 +185,12 @@ impl PalletteApp {
                                 self.pallette.update_color(sim.color, c);
                                 // app.similar = None
                             }
+                            if ui
+                                .add(egui::Button::new(egui::RichText::new("Add")))
+                                .clicked()
+                            {
+                                self.pallette.add_new_color(c);
+                            }
                         }
                     });
                 });
