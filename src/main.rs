@@ -39,7 +39,7 @@ enum AppState {
 
 enum SourceFileState {
     NoFile,
-    File
+    File,
 }
 
 struct PalletteApp {
@@ -104,7 +104,7 @@ impl eframe::App for PalletteApp {
                 ui.add_space(20.);
                 ui.group(|ui| {
                     ui.set_min_size(egui::Vec2::new(self.panel_width, 700.0));
-                    self.image_panel(ui);
+                    self.image_panel(ui, ctx);
                 });
             });
         });
@@ -124,7 +124,7 @@ impl PalletteApp {
                 if !i.raw.dropped_files.is_empty() {
                     if let Some(f_path) = &i.raw.dropped_files[0].path {
                         self.picked_path = Some(f_path.display().to_string());
-                        self.
+                        // self.
                         self.source_file_state = SourceFileState::File;
                     }
                 }
@@ -377,12 +377,13 @@ impl PalletteApp {
                 && let Some(path) = rfd::FileDialog::new().pick_file()
             {
                 self.picked_path = Some(path.display().to_string());
-                self.app_state = AppState::FileSelected;
+                // self.app_state = AppState::FileSelected;
+                self.source_file_state = SourceFileState::File;
             }
         }
     }
 
-    fn image_panel(&mut self, ui: &mut egui::Ui) {
+    fn image_panel(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.vertical_centered(|ui| {
             ui.set_min_width(self.panel_width);
             // ui.centered_and_justified(|ui|
@@ -391,13 +392,32 @@ impl PalletteApp {
                     ui.set_min_size(egui::Vec2::new(200., 200.));
                     ui.image(egui::include_image!("assets/pallette.svg"));
                 }
-                SourceFileState::FileSelected | AppState::PalletteGenerated => {
+                SourceFileState::File => {
                     ui.horizontal(|ui| {
                         if let Some(texture_id) = &self.texture_id {
                             let desired_size = egui::vec2(400.0, 500.0);
                             ui.add(egui::Image::new(texture_id).fit_to_exact_size(desired_size));
                         } else {
                             ui.label("Loading image...");
+
+                            if let Some(picked_path) = &self.picked_path {
+                                if let Ok(img) = load_image(picked_path) {
+                                    let color_image = convert_img_for_display(img);
+                                    self.texture_id = Some(ctx.load_texture(
+                                        "my_image",
+                                        color_image,
+                                        Default::default(),
+                                    ));
+                                }
+                                ui.horizontal(|ui| {
+                                    ui.label("Picked file:");
+                                    ui.monospace(picked_path);
+                                });
+                                if ui.button("Extract Pallette").clicked() {
+                                    self.pallette.update(picked_path);
+                                    self.app_state = AppState::PalletteGenerated;
+                                }
+                            }
                         }
                     });
                 }
