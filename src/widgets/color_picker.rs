@@ -100,7 +100,9 @@ pub fn show_color_at(painter: &Painter, color: Color32, rect: Rect) {
 }
 
 fn color_button(ui: &mut Ui, color: Color32, open: bool) -> Response {
-    let size = ui.spacing().interact_size;
+    let _size = ui.spacing().interact_size;
+
+    let size = Vec2::new(_size[0] * 2.5, _size[1] * 5.);
     let (rect, response) = ui.allocate_exact_size(size, Sense::click());
     response.widget_info(|| WidgetInfo::new(WidgetType::ColorButton));
 
@@ -495,13 +497,13 @@ pub fn color_picker_hsva_2d(ui: &mut Ui, hsva: &mut Hsva, alpha: Alpha) -> bool 
 /// Shows a color picker where the user can change the given [`Color32`] color.
 ///
 /// Returns `true` on change.
-pub fn color_picker_color32(ui: &mut Ui, srgba: &mut Color32, alpha: Alpha) -> bool {
-    let mut hsva = color_cache_get(ui.ctx(), *srgba);
-    let changed = color_picker_hsva_2d(ui, &mut hsva, alpha);
-    *srgba = Color32::from(hsva);
-    color_cache_set(ui.ctx(), *srgba, hsva);
-    changed
-}
+// pub fn color_picker_color32(ui: &mut Ui, srgba: &mut Color32, alpha: Alpha) -> bool {
+//     let mut hsva = color_cache_get(ui.ctx(), *srgba);
+//     let changed = color_picker_hsva_2d(ui, &mut hsva, alpha);
+//     *srgba = Color32::from(hsva);
+//     color_cache_set(ui.ctx(), *srgba, hsva);
+//     changed
+// }
 
 pub fn color_edit_button_hsva(ui: &mut Ui, hsva: &mut Hsva, alpha: Alpha) -> Response {
     let popup_id = ui.auto_id_with("popup");
@@ -539,46 +541,46 @@ pub fn custom_color_edit_button_srgba(ui: &mut Ui, srgba: &mut Color32) -> Respo
 
 /// Shows a button with the given color.
 /// If the user clicks the button, a full color picker is shown.
-pub fn color_edit_button_srgba(ui: &mut Ui, srgba: &mut Color32, alpha: Alpha) -> Response {
-    let mut hsva = color_cache_get(ui.ctx(), *srgba);
-    let response = color_edit_button_hsva(ui, &mut hsva, alpha);
-    *srgba = Color32::from(hsva);
-    color_cache_set(ui.ctx(), *srgba, hsva);
-    response
-}
+// pub fn color_edit_button_srgba(ui: &mut Ui, srgba: &mut Color32, alpha: Alpha) -> Response {
+//     let mut hsva = color_cache_get(ui.ctx(), *srgba);
+//     let response = color_edit_button_hsva(ui, &mut hsva, alpha);
+//     *srgba = Color32::from(hsva);
+//     color_cache_set(ui.ctx(), *srgba, hsva);
+//     response
+// }
 
 /// Shows a button with the given color.
 /// If the user clicks the button, a full color picker is shown.
 /// The given color is in `sRGB` space.
-pub fn custom_color_edit_button_srgb(ui: &mut Ui, srgb: &mut [u8; 3]) -> Response {
-    let mut srgba = Color32::from_rgb(srgb[0], srgb[1], srgb[2]);
-    let response = color_edit_button_srgba(ui, &mut srgba, Alpha::Opaque);
-    srgb[0] = srgba[0];
-    srgb[1] = srgba[1];
-    srgb[2] = srgba[2];
-    response
-}
+// pub fn custom_color_edit_button_srgb(ui: &mut Ui, srgb: &mut [u8; 3]) -> Response {
+//     let mut srgba = Color32::from_rgb(srgb[0], srgb[1], srgb[2]);
+//     let response = color_edit_button_srgba(ui, &mut srgba, Alpha::Opaque);
+//     srgb[0] = srgba[0];
+//     srgb[1] = srgba[1];
+//     srgb[2] = srgba[2];
+//     response
+// }
 
 /// Shows a button with the given color.
 /// If the user clicks the button, a full color picker is shown.
-pub fn color_edit_button_rgba(ui: &mut Ui, rgba: &mut Rgba, alpha: Alpha) -> Response {
-    let mut hsva = color_cache_get(ui.ctx(), *rgba);
-    let response = color_edit_button_hsva(ui, &mut hsva, alpha);
-    *rgba = Rgba::from(hsva);
-    color_cache_set(ui.ctx(), *rgba, hsva);
-    response
-}
+// pub fn color_edit_button_rgba(ui: &mut Ui, rgba: &mut Rgba, alpha: Alpha) -> Response {
+//     let mut hsva = color_cache_get(ui.ctx(), *rgba);
+//     let response = color_edit_button_hsva(ui, &mut hsva, alpha);
+//     *rgba = Rgba::from(hsva);
+//     color_cache_set(ui.ctx(), *rgba, hsva);
+//     response
+// }
 
 /// Shows a button with the given color.
 /// If the user clicks the button, a full color picker is shown.
-pub fn color_edit_button_rgb(ui: &mut Ui, rgb: &mut [f32; 3]) -> Response {
-    let mut rgba = Rgba::from_rgb(rgb[0], rgb[1], rgb[2]);
-    let response = color_edit_button_rgba(ui, &mut rgba, Alpha::Opaque);
-    rgb[0] = rgba[0];
-    rgb[1] = rgba[1];
-    rgb[2] = rgba[2];
-    response
-}
+// pub fn color_edit_button_rgb(ui: &mut Ui, rgb: &mut [f32; 3]) -> Response {
+//     let mut rgba = Rgba::from_rgb(rgb[0], rgb[1], rgb[2]);
+//     let response = color_edit_button_rgba(ui, &mut rgba, Alpha::Opaque);
+//     rgb[0] = rgba[0];
+//     rgb[1] = rgba[1];
+//     rgb[2] = rgba[2];
+//     response
+// }
 
 // To ensure we keep hue slider when `srgba` is gray we store the full [`Hsva`] in a cache:
 fn color_cache_get(ctx: &Context, rgba: impl Into<Rgba>) -> Hsva {

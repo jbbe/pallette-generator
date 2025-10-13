@@ -1,6 +1,6 @@
 use eframe::egui;
 
-use crate::{core::color_detail::ColorDetail, widgets::{custom_color_edit_button_srgb, custom_color_edit_button_srgba}};
+use crate::{core::color_detail::ColorDetail, widgets::custom_color_edit_button_srgba};
 
 pub struct ColorApp {
     color: ColorDetail,
@@ -37,7 +37,6 @@ impl ColorApp {
         )
     }
     fn color_options_panel(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        // ui.color_edit_button_srgba(&mut self.color.egui_color);
         custom_color_edit_button_srgba(ui, &mut self.color.egui_color);
         ui.vertical(|ui| {
             ui.vertical(|ui| {

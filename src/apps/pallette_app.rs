@@ -4,7 +4,7 @@ use eframe::egui;
 use egui::ColorImage;
 use image::{DynamicImage, RgbaImage};
 
-use crate::{core::pallette::Pallette, core::color::ColorUtil, core::color_detail::ColorDetail, core::similar::Similar};
+use crate::{core::{color::ColorUtil, color_detail::ColorDetail, pallette::Pallette, similar::Similar}, widgets::custom_color_edit_button_srgba};
 
 enum AppState {
     NoPallette,
@@ -252,7 +252,7 @@ impl PalletteApp {
 
     fn add_color(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.label("Add Color");
-        ui.color_edit_button_srgba(&mut self.new_color.egui_color);
+        custom_color_edit_button_srgba(ui, &mut self.new_color.egui_color);
         // ToDo Update rest of color info on color change
         if Self::color_button(ui, self.new_color.egui_color, "Add").clicked() {
             self.new_color.update_from_egui_color(false);
