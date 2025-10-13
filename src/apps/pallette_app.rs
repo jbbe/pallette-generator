@@ -1,10 +1,12 @@
-
 use eframe::egui;
 
 use egui::ColorImage;
 use image::{DynamicImage, RgbaImage};
 
-use crate::{core::{color::ColorUtil, color_detail::ColorDetail, pallette::Pallette, similar::Similar}, widgets::custom_color_edit_button_srgba};
+use crate::{
+    core::{color::ColorUtil, color_detail::ColorDetail, pallette::Pallette, similar::Similar},
+    widgets::custom_color_edit_button_srgba,
+};
 
 enum AppState {
     NoPallette,
@@ -110,10 +112,7 @@ impl PalletteApp {
                 }
             });
 
-            if ui
-                .add(egui::Button::new(egui::RichText::new("New Pallette")))
-                .clicked()
-            {
+            if Self::base_button(ui, "New Pallette").clicked() {
                 self.pallette = Pallette::rand_pallette();
                 self.app_state = AppState::PalletteGenerated;
             }
@@ -145,18 +144,12 @@ impl PalletteApp {
                                 // println!("Copy {hex}");
                                 ctx.copy_text(hex.to_owned());
                             }
-                            if ui
-                                .add(egui::Button::new(egui::RichText::new("Replace")))
-                                .clicked()
-                            {
+                            if Self::base_button(ui, "Replace").clicked() {
                                 // self.update_similar_pallette_color(sim.color, c);
                                 self.pallette.update_color(sim.color, c);
                                 // app.similar = None
                             }
-                            if ui
-                                .add(egui::Button::new(egui::RichText::new("Add")))
-                                .clicked()
-                            {
+                            if Self::base_button(ui, "Add").clicked() {
                                 self.pallette.add_new_color(c);
                             }
                         }
@@ -208,10 +201,7 @@ impl PalletteApp {
                         println!("clicking this does nothing")
                     }
                 });
-                if ui
-                    .add(egui::Button::new(egui::RichText::new("Similar")))
-                    .clicked()
-                {
+                if Self::base_button(ui, "Similar").clicked() {
                     self.similar = Some(Similar::new_similar(
                         detail.color,
                         &self.pallette.all_entries,
@@ -226,18 +216,12 @@ impl PalletteApp {
                     {
                         ctx.copy_text(detail.complement_hex.to_owned());
                     }
-                    if ui
-                        .add(egui::Button::new(egui::RichText::new("Add")))
-                        .clicked()
-                    {
+                    if Self::base_button(ui, "Add").clicked() {
                         self.pallette.add_new_color(detail.complement);
                     }
                 });
             });
-            if ui
-                .add(egui::Button::new(egui::RichText::new("Similar")))
-                .clicked()
-            {
+            if Self::base_button(ui, "Similar").clicked() {
                 self.similar = Some(Similar::new_similar(
                     detail.color,
                     &self.pallette.all_entries,
@@ -254,19 +238,20 @@ impl PalletteApp {
         ui.label("Add Color");
         custom_color_edit_button_srgba(ui, &mut self.new_color.egui_color);
         // ToDo Update rest of color info on color change
-        if Self::color_button(ui, self.new_color.egui_color, "Add").clicked() {
+        if Self::base_button(ui, "Add").clicked() {
             self.new_color.update_from_egui_color(false);
             self.pallette.add_new_color(self.new_color.color);
             self.new_color = ColorDetail::default();
         }
 
-        if ui
-            .add(egui::Button::new(egui::RichText::new("Copy")))
-            .clicked()
-        {
+        if Self::base_button(ui, "Copy").clicked() {
             self.new_color.update_from_egui_color(false);
             ctx.copy_text(self.new_color.hex.to_owned());
         }
+    }
+
+    fn base_button(ui: &mut egui::Ui, text: &str) -> egui::Response {
+        ui.add(egui::Button::new(egui::RichText::new(text)))
     }
 
     fn pallette_color(&mut self, ui: &mut egui::Ui, ctx: &egui::Context, i: usize) {
@@ -279,16 +264,10 @@ impl PalletteApp {
         }
         ui.vertical(|ui| {
             ui.set_min_width(90.);
-            if ui
-                .add(egui::Button::new(egui::RichText::new("Swap")))
-                .clicked()
-            {
+            if Self::base_button(ui, "Swap").clicked() {
                 self.pallette.swap_top_color(i);
             }
-            if ui
-                .add(egui::Button::new(egui::RichText::new("Options")))
-                .clicked()
-            {
+            if Self::base_button(ui, "Options").clicked() {
                 let t = (i, ColorDetail::new(self.pallette.top_rgb[i]));
                 self.show_details = Some(t);
             }
@@ -345,7 +324,9 @@ impl PalletteApp {
             ui.label("Drag and drop a file to create a pallette");
 
             if ui.button("Open file…").clicked()
-                && let Some(path) = rfd::FileDialog::new().pick_file()
+                && let Some(path) = rfd::FileDialog::new()
+                    .add_filter("Images", &["png", "jpg", "jpeg", "webp"])
+                    .pick_file()
             {
                 self.picked_path = Some(path.display().to_string());
                 // self.app_state = AppState::FileSelected;
