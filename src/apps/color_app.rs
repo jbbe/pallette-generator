@@ -77,6 +77,32 @@ impl ColorApp {
                         ctx.copy_text(self.color.complement_hex.to_owned());
                     }
                 });
+            });
+            ui.add_space(50.);
+            ui.horizontal(|ui| {
+                ui.label("Split Compliment");
+                ui.vertical(|ui| {
+                    if Self::color_button(
+                        ui,
+                        self.color.split_complement_egui.0,
+                        &self.color.split_complement_hex.0,
+                    )
+                    .clicked()
+                    {
+                        ctx.copy_text(self.color.split_complement_hex.1.to_owned());
+                    }
+                });
+                ui.vertical(|ui| {
+                    if Self::color_button(
+                        ui,
+                        self.color.split_complement_egui.1,
+                        &self.color.split_complement_hex.1,
+                    )
+                    .clicked()
+                    {
+                        ctx.copy_text(self.color.split_complement_hex.1.to_owned());
+                    }
+                });
             })
         });
     }

@@ -45,32 +45,29 @@ impl HSV {
         }
     }
 
-    pub fn to_rgb(hsv: HSV) -> Rgb<u8> {
-        if hsv.s == 0. {
-            let color_f = 255. * hsv.v;
+    pub fn to_rgb(h: f32, s: f32, v: f32) -> Rgb<u8> {
+        if s == 0. {
+            let color_f = 255. * v;
             let color_u = color_f as u8;
             return Rgb([color_u, color_u, color_u]);
         }
 
-        let c = hsv.v * hsv.s;
-        let x = c * (1. - f32::abs((hsv.h / 60.) % 2. - 1.));
-        let m = hsv.v - c;
+        let c = v * s;
+        let x = c * (1. - f32::abs((h / 60.) % 2. - 1.));
+        let m = v - c;
 
-        // let c = cf as u8;
-        // let x = xf as u8;
-        let h = hsv.h;
         println!("h c x {h} {c}  {x} ");
-        let c_prime = if hsv.h >= 0. && hsv.h < 60. {
+        let c_prime = if h >= 0. && h < 60. {
             [c, x, 0.]
-        } else if hsv.h <= 120. {
+        } else if h <= 120. {
             [x, c, 0.]
-        } else if hsv.h <= 180. {
+        } else if h <= 180. {
             [0., c, x]
-        } else if hsv.h <= 240. {
+        } else if h <= 240. {
             [0., x, c]
-        } else if hsv.h <= 300. {
+        } else if h <= 300. {
             [x, 0., c]
-        } else if hsv.h <= 360. {
+        } else if h <= 360. {
             [c, 0., x]
         } else {
             // h should always be less than eq to 360
@@ -80,6 +77,10 @@ impl HSV {
         let g = (c_prime[1] + m) * 255.;
         let b = (c_prime[2] + m) * 255.;
         Rgb([r as u8, g as u8, b as u8])
+    }
+
+    pub fn hsv_to_rgb(hsv: HSV) -> Rgb<u8> {
+        Self::to_rgb(hsv.h, hsv.s, hsv.v)
     }
 
     // fn rgb_prime(h: f32, c: u)
@@ -100,6 +101,17 @@ impl ColorUtil {
             + (2. + ((256. - ap_r) / 256.)) * (db * db);
 
         f32::sqrt(dc_sq)
+    }
+
+    pub fn split_complement(c: &HSV) -> (Rgb<u8>, Rgb<u8>) {
+        let h = c.h + 180.;
+        let h0 = h + 30.;
+        let h1 = h - 30.;
+        (HSV::to_rgb(h0, c.s, c.v), HSV::to_rgb(h1, c.s, c.v))
+    }
+
+    pub fn rgb_to_egui(c: &Rgb<u8>) -> egui::Color32 {
+        egui::Color32::from_rgb(c[0], c[1], c[2])
     }
 
     fn component_diff(c1: Rgb<u8>, c2: Rgb<u8>, component: usize) -> f32 {
@@ -149,7 +161,7 @@ mod tests {
         let rgb = Rgb([100, 192, 154]);
         let hsv = HSV::from_rgb(rgb);
         valid_hsv(&hsv);
-        let rgb_out = HSV::to_rgb(hsv);
+        let rgb_out = HSV::hsv_to_rgb(hsv);
         assert_eq!(rgb, rgb_out);
     }
     #[test]
@@ -157,7 +169,7 @@ mod tests {
         let rgb = Rgb([136, 136, 136]);
         let h = HSV::from_rgb(rgb);
         valid_hsv(&h);
-        let rgb_out = HSV::to_rgb(h);
+        let rgb_out = HSV::hsv_to_rgb(h);
         assert_eq!(rgb, rgb_out);
     }
     
@@ -189,7 +201,7 @@ mod tests {
     fn rgb_test(rgb: Rgb<u8>) {
         let h = HSV::from_rgb(rgb);
         valid_hsv(&h);
-        let rgb_out = HSV::to_rgb(h);
+        let rgb_out = HSV::hsv_to_rgb(h);
         assert_eq!(rgb, rgb_out);
     }
 
