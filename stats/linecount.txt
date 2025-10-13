@@ -1,0 +1,8 @@
+lock 5530
+svg 198
+json 21
+png 86
+rs 2790
+gitignore 2
+toml 16
+txt 69
