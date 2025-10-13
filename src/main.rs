@@ -6,6 +6,7 @@ use eframe::egui;
 mod core;
 mod apps;
 mod debug;
+mod widgets;
 use apps::WrapApp;
 
 // use crate::debug::backend_panel;
