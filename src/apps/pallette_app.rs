@@ -255,7 +255,7 @@ impl PalletteApp {
         ui.color_edit_button_srgba(&mut self.new_color.egui_color);
         // ToDo Update rest of color info on color change
         if Self::color_button(ui, self.new_color.egui_color, "Add").clicked() {
-            self.new_color.update_from_egui_color();
+            self.new_color.update_from_egui_color(false);
             self.pallette.add_new_color(self.new_color.color);
             self.new_color = ColorDetail::default();
         }
@@ -264,7 +264,7 @@ impl PalletteApp {
             .add(egui::Button::new(egui::RichText::new("Copy")))
             .clicked()
         {
-            self.new_color.update_from_egui_color();
+            self.new_color.update_from_egui_color(false);
             ctx.copy_text(self.new_color.hex.to_owned());
         }
     }
