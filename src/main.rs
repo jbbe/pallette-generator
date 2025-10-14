@@ -20,23 +20,11 @@ lazy_static! {
 
 fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
-    let colors_res = ColorNames::load();
-
-    match colors_res {
-        Ok(map) => {
-            let mut dict = COLOR_DICT.lock().unwrap();
-            *dict = map; // Popu
-        }
-        Err(e) => println!("Error loading colors dictionary {}", e),
-    }
-
+    init_color_dict();
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1280.0, 1024.0])
             .with_drag_and_drop(true),
-
-        // #[cfg(feature = "wgpu")]
-        // renderer: eframe::Renderer::Wgpu,
         ..Default::default()
     };
 
@@ -52,6 +40,18 @@ fn main() -> eframe::Result {
             // This produces a nicer error message than returning the `Result`:
             print_error_and_exit(&err);
         }
+    }
+}
+
+fn init_color_dict() {
+    let colors_res = ColorNames::load();
+
+    match colors_res {
+        Ok(map) => {
+            let mut dict = COLOR_DICT.lock().unwrap();
+            *dict = map;
+        }
+        Err(e) => println!("Error loading colors dictionary {}", e),
     }
 }
 

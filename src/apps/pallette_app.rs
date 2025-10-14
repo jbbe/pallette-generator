@@ -35,6 +35,7 @@ pub struct PalletteApp {
     new_color: ColorDetail,
     color_picking: bool,
     last_color_picked: Option<Rgb<u8>>,
+    pallette_list: Vec<Pallette>,
 }
 
 const PALLETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
@@ -53,12 +54,26 @@ impl Default for PalletteApp {
             new_color: ColorDetail::default(),
             color_picking: false,
             last_color_picked: None,
+            pallette_list: Vec::new(),
         }
     }
 }
 
 impl eframe::App for PalletteApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let is_open = true;
+        egui::SidePanel::left("pallette_panel")
+            .resizable(false)
+            .show_animated(ctx, is_open, |ui| {
+                ui.add_space(4.0);
+                ui.vertical_centered(|ui| {
+                    ui.heading("Pallettes");
+                });
+
+                ui.separator();
+                self.pallette_list_panel(ui);
+                // self.backend_panel_contents(ui, frame, &mut cmd);
+            });
         egui::CentralPanel::default().show(ctx, |ui| {
             self.panel_width = (ui.available_width() - 20.0) / 2.0;
             ui.horizontal(|ui| {
@@ -378,6 +393,22 @@ impl PalletteApp {
     //     }
     // }
 
+    fn pallette_list_panel(&mut self, ui: &mut egui::Ui) {
+        ui.label("pallette list panel");
+        for p in &self.pallette_list {
+            if ui.button(p.pallette_name.clone()).clicked() {
+                self.pallette = p.clone();
+                self.texture_id = None;
+                if p.current_path.is_some() {
+                    self.source_file_state = SourceFileState::File;
+                    self.picked_path = p.current_path.clone();
+                } else {
+                    self.source_file_state = SourceFileState::NoFile
+                }
+            }
+        }
+    }
+
     fn add_color(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.label("Add Color");
         custom_color_edit_button_srgba(ui, &mut self.new_color.egui_color);
@@ -449,15 +480,26 @@ impl PalletteApp {
             println!("Save clicked");
             self.pallette.save_pallette_text(self.pallette_name.clone())
         }
+        if ui.button("Save to List").clicked() {
+            println!("Save to list");
+            let idx = self
+                .pallette_list
+                .iter()
+                .position(|p| p.id == self.pallette.id);
+            match idx {
+                Some(idx) => self.pallette_list[idx] = self.pallette.clone(),
+                None => self.pallette_list.push(self.pallette.clone()),
+            };
+        }
     }
 
     fn reset_button(&mut self, ui: &mut egui::Ui) {
         if ui.button("Reset").clicked() {
             println!("reset");
-            self.pallette.reset();
+            self.pallette = Pallette::default();
             self.picked_path = None;
             self.app_state = AppState::NoPallette;
-            self.source_file_state = SourceFileState::File;
+            self.source_file_state = SourceFileState::NoFile;
             self.texture_id = None;
             self.similar = None
         }
@@ -473,7 +515,6 @@ impl PalletteApp {
                     .pick_file()
             {
                 self.picked_path = Some(path.display().to_string());
-                // self.app_state = AppState::FileSelected;
                 self.source_file_state = SourceFileState::File;
             }
         }

@@ -6,11 +6,13 @@ use std::collections::HashMap;
 use std::io::{self, Write};
 use std::sync::mpsc;
 use std::thread;
+use uuid::Uuid;
 
 use crate::core::color::ColorUtil;
 
 #[derive(Clone)]
 pub(crate) struct Pallette {
+    pub id: Uuid,
     pub pallette_name: String,
     pub top_rgb: Vec<Rgb<u8>>,
     pub top_hex: Vec<String>,
@@ -22,6 +24,7 @@ pub(crate) struct Pallette {
 impl Default for Pallette {
     fn default() -> Self {
         Self {
+            id: uuid::Uuid::new_v4(),
             pallette_name: "".to_string(),
             top_rgb: Vec::new(),
             top_hex: Vec::new(),
@@ -46,6 +49,7 @@ impl Pallette {
         }
 
         Self {
+            id: Uuid::new_v4(),
             pallette_name: "New Random Pallette".to_string(),
             pallette_size,
             top_rgb,

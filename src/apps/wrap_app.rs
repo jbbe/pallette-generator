@@ -1,4 +1,3 @@
-
 use eframe::egui;
 
 // mod core;
@@ -29,7 +28,6 @@ pub struct State {
     // image_viewer: crate::apps::ImageViewer,
     // pub clock: FractalClockApp,
     // rendering_test: ColorTestApp,
-
     selected_anchor: Anchor,
     backend_panel: backend_panel::BackendPanel,
 }
@@ -38,7 +36,6 @@ pub struct State {
 pub struct WrapApp {
     pub state: State,
 }
-
 
 impl WrapApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
@@ -86,7 +83,6 @@ enum Command {
     ResetEverything,
 }
 
-
 impl eframe::App for WrapApp {
     // #[cfg(feature = "persistence")]
     // fn save(&mut self, storage: &mut dyn eframe::Storage) {
@@ -133,18 +129,12 @@ impl eframe::App for WrapApp {
             });
 
         self.state.backend_panel.update(ctx, frame);
-
         cmd = self.backend_panel(ctx, frame);
-
         self.show_selected_app(ctx, frame);
-
         self.state.backend_panel.end_of_frame(ctx);
-
-        // self.ui_file_drag_and_drop(ctx);
 
         self.run_cmd(ctx, cmd);
     }
-
 }
 
 impl WrapApp {
@@ -221,16 +211,7 @@ impl WrapApp {
         egui::widgets::global_theme_preference_switch(ui);
 
         ui.separator();
-
-        // if is_mobile(ui.ctx()) {
-        //     ui.menu_button("💻 Backend", |ui| {
-        //         ui.set_style(ui.ctx().style()); // ignore the "menu" style set by `menu_button`.
-        //         self.backend_panel_contents(ui, frame, cmd);
-        //     });
-        // } else {
-            ui.toggle_value(&mut self.state.backend_panel.open, "💻 Backend");
-        // }
-
+        ui.toggle_value(&mut self.state.backend_panel.open, "💻 Backend");
         ui.separator();
 
         let mut selected_anchor = self.state.selected_anchor;
@@ -240,10 +221,6 @@ impl WrapApp {
                 .clicked()
             {
                 selected_anchor = anchor;
-                // if frame.is_web() {
-                //     ui.ctx()
-                //         .open_url(egui::OpenUrl::same_tab(format!("#{anchor}")));
-                // }
             }
         }
         self.state.selected_anchor = selected_anchor;
@@ -252,43 +229,4 @@ impl WrapApp {
             egui::warn_if_debug_build(ui);
         });
     }
-
-    // fn ui_file_drag_and_drop(&mut self, ctx: &egui::Context) {
-    //     use egui::{Align2, Color32, Id, LayerId, Order, TextStyle};
-    //     use std::fmt::Write as _;
-
-    //     // Preview hovering files:
-    //     if !ctx.input(|i| i.raw.hovered_files.is_empty()) {
-    //         let text = ctx.input(|i| {
-    //             let mut text = "Dropping files:\n".to_owned();
-    //             for file in &i.raw.hovered_files {
-    //                 if let Some(path) = &file.path {
-    //                     write!(text, "\n{}", path.display()).ok();
-    //                 } else if !file.mime.is_empty() {
-    //                     write!(text, "\n{}", file.mime).ok();
-    //                 } else {
-    //                     text += "\n???";
-    //                 }
-    //             }
-    //             text
-    //         });
-
-    //         let painter =
-    //             ctx.layer_painter(LayerId::new(Order::Foreground, Id::new("file_drop_target")));
-
-    //         let content_rect = ctx.content_rect();
-    //         painter.rect_filled(content_rect, 0.0, Color32::from_black_alpha(192));
-    //         painter.text(
-    //             content_rect.center(),
-    //             Align2::CENTER_CENTER,
-    //             text,
-    //             TextStyle::Heading.resolve(&ctx.style()),
-    //             Color32::WHITE,
-    //         );
-    //     }
-    // }
 }
-
-
-
-
