@@ -28,10 +28,10 @@ pub struct PalletteApp {
     texture_id: Option<egui::TextureHandle>,
     similar: Option<Similar>,
     panel_width: f32,
-    show_details: Option<(usize, ColorDetail)>,
+    show_details: Option<ColorDetail>,
     new_color: ColorDetail,
     color_picking: bool,
-    last_color_picked: Option<image::Rgb<u8>>,
+    last_color_picked: Option<Rgb<u8>>,
 }
 
 const PALLETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
@@ -289,7 +289,7 @@ impl PalletteApp {
     }
 
     fn color_options_panel(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        if let Some((_idx, detail)) = &self.show_details {
+        if let Some(detail) = &self.show_details {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
                     ui.label("Color");
@@ -338,7 +338,7 @@ impl PalletteApp {
                     {
                         ctx.copy_text(detail.split_complement_hex.1.to_owned());
                     }
-                    // self.add_color_btn(ui, detail.split_complement.1);
+                    // self.add_color_btn(ui, detail.split_complem`nt.1);
                 });
             });
             if Self::base_button(ui, "Similar").clicked() {
@@ -362,11 +362,11 @@ impl PalletteApp {
         }
     }
 
-    fn add_color_btn(&mut self, ui: &mut egui::Ui, color: Rgb<u8>) {
-        if Self::base_button(ui, "Add").clicked() {
-            self.pallette.add_new_color(color);
-        }
-    }
+    // fn add_color_btn(&mut self, ui: &mut egui::Ui, color: Rgb<u8>) {
+    //     if Self::base_button(ui, "Add").clicked() {
+    //         self.pallette.add_new_color(color);
+    //     }
+    // }
 
     fn add_color(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.label("Add Color");
@@ -402,8 +402,7 @@ impl PalletteApp {
                 self.pallette.swap_top_color(i);
             }
             if Self::base_button(ui, "Options").clicked() {
-                let t = (i, ColorDetail::new(self.pallette.top_rgb[i]));
-                self.show_details = Some(t);
+                self.show_details = Some(ColorDetail::new(self.pallette.top_rgb[i]));
             }
         });
     }

@@ -1,7 +1,5 @@
 highlight on image on color hover
 center image
-limit filepicker extensions
-pallette without source image
 
 
 done
@@ -10,3 +8,5 @@ gui
 drag and drop
 Remove highly similar colors from top pick
 remove colors and replace with next top match
+pallette without source image
+limit filepicker extensions

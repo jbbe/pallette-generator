@@ -18,7 +18,7 @@ impl HSV {
         let r = c[0];
         let g = c[1];
         let b = c[2];
-        println!("rgb {r_n}, {g_n}, {b_n}, {r}, {g}, {b} ");
+        // println!("rgb {r_n}, {g_n}, {b_n}, {r}, {g}, {b} ");
         let c_max = f32::max(f32::max(r_n, g_n), b_n);
         let c_min = f32::min(f32::min(r_n, g_n), b_n);
         let delta = c_max - c_min;
@@ -28,21 +28,13 @@ impl HSV {
             60. * (((g_n - b_n) / delta) % 6.)
         } else if g_n == c_max {
             60. * (((b_n - r_n) / delta) + 2.)
-
-        } else { // if b_n == c_max
+        } else {
+            // if b_n == c_max
             60. * (((r_n - g_n) / delta) + 4.)
         };
 
-        let s = if c_max == 0.0 {
-            0.
-        } else {
-            delta / c_max
-        };
-        Self {
-            h,
-            s,
-            v: c_max
-        }
+        let s = if c_max == 0.0 { 0. } else { delta / c_max };
+        Self { h, s, v: c_max }
     }
 
     pub fn to_rgb(h: f32, s: f32, v: f32) -> Rgb<u8> {
@@ -56,7 +48,7 @@ impl HSV {
         let x = c * (1. - f32::abs((h / 60.) % 2. - 1.));
         let m = v - c;
 
-        println!("h c x {h} {c}  {x} ");
+        // println!("h c x {h} {c}  {x} ");
         let c_prime = if h >= 0. && h < 60. {
             [c, x, 0.]
         } else if h <= 120. {
@@ -71,7 +63,7 @@ impl HSV {
             [c, 0., x]
         } else {
             // h should always be less than eq to 360
-            [0.,0.,0.]
+            [0., 0., 0.]
         };
         let r = (c_prime[0] + m) * 255.;
         let g = (c_prime[1] + m) * 255.;
@@ -85,7 +77,6 @@ impl HSV {
 
     // fn rgb_prime(h: f32, c: u)
 }
-
 
 pub(crate) struct ColorUtil {}
 
@@ -123,7 +114,7 @@ impl ColorUtil {
     }
 
     pub fn get_compliment(c: Rgb<u8>) -> Rgb<u8> {
-        Rgb([255- c[0], 255 - c[1], 255 - c[2]])
+        Rgb([255 - c[0], 255 - c[1], 255 - c[2]])
     }
 
     pub fn rand_color() -> Rgb<u8> {
@@ -131,7 +122,7 @@ impl ColorUtil {
         let r: u8 = rng.gen_range(0..=255);
         let g: u8 = rng.gen_range(0..=255);
         let b: u8 = rng.gen_range(0..=255);
-        Rgb([r,g,b])
+        Rgb([r, g, b])
     }
 
     pub fn rand_egui_color() -> egui::Color32 {
@@ -142,7 +133,6 @@ impl ColorUtil {
         egui::Color32::from_rgb(r, g, b)
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -172,7 +162,7 @@ mod tests {
         let rgb_out = HSV::hsv_to_rgb(h);
         assert_eq!(rgb, rgb_out);
     }
-    
+
     // #[test]
     // fn rgb_hsv_1() {
     //     rgb_test(Rgb([3, 229, 91]));

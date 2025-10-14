@@ -1,6 +1,7 @@
-use eframe::egui;
-
+use crate::core::color_names::ColorNames;
 use crate::{core::color_detail::ColorDetail, widgets::custom_color_edit_button_srgba};
+use eframe::egui;
+use image::Rgb;
 
 pub struct ColorApp {
     color: ColorDetail,
@@ -17,13 +18,7 @@ impl Default for ColorApp {
 
 impl eframe::App for ColorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // self.panel_width = (ui.available_width() - 20.0) / 2.0;
-            // ui.centered_and_justified(|ui| {
-                self.color_options_panel(ui, ctx)
-
-            // });
-        });
+        egui::CentralPanel::default().show(ctx, |ui| self.color_options_panel(ui, ctx));
     }
 }
 
@@ -45,12 +40,7 @@ impl ColorApp {
                 if Self::color_button(ui, self.color.egui_color, &self.color.hex).clicked() {
                     ctx.copy_text(self.color.hex.to_owned());
                 }
-                if ui
-                    .add(egui::Button::new(egui::RichText::new("Add")))
-                    .clicked()
-                {
-                    println!("clicking this does nothing")
-                }
+                self.color_info(ui, &self.color.color);
             });
             ui.add_space(50.);
             // if ui
@@ -76,6 +66,7 @@ impl ColorApp {
                     {
                         ctx.copy_text(self.color.complement_hex.to_owned());
                     }
+                    self.color_info(ui, &self.color.complement);
                 });
             });
             ui.add_space(50.);
@@ -89,8 +80,9 @@ impl ColorApp {
                     )
                     .clicked()
                     {
-                        ctx.copy_text(self.color.split_complement_hex.1.to_owned());
+                        ctx.copy_text(self.color.split_complement_hex.0.to_owned());
                     }
+                    self.color_info(ui, &self.color.split_complement.0);
                 });
                 ui.vertical(|ui| {
                     if Self::color_button(
@@ -102,8 +94,16 @@ impl ColorApp {
                     {
                         ctx.copy_text(self.color.split_complement_hex.1.to_owned());
                     }
+                    self.color_info(ui, &self.color.split_complement.1);
                 });
             });
         });
+    }
+
+    fn color_info(&self, ui: &mut egui::Ui, color: &Rgb<u8>) {
+        let c_name = ColorNames::get_color_name(color);
+        if let Some(name) = c_name {
+            ui.label(name);
+        }
     }
 }
