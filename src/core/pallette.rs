@@ -9,7 +9,9 @@ use std::thread;
 
 use crate::core::color::ColorUtil;
 
+#[derive(Clone)]
 pub(crate) struct Pallette {
+    pub pallette_name: String,
     pub top_rgb: Vec<Rgb<u8>>,
     pub top_hex: Vec<String>,
     pub current_path: Option<String>,
@@ -20,6 +22,7 @@ pub(crate) struct Pallette {
 impl Default for Pallette {
     fn default() -> Self {
         Self {
+            pallette_name: "".to_string(),
             top_rgb: Vec::new(),
             top_hex: Vec::new(),
             current_path: None,
@@ -43,6 +46,7 @@ impl Pallette {
         }
 
         Self {
+            pallette_name: "New Random Pallette".to_string(),
             pallette_size,
             top_rgb,
             top_hex,
@@ -66,6 +70,7 @@ impl Pallette {
             // let p= path.to_string();
             tx.send(Self::extract_pallete(&p).unwrap())
         });
+        self.pallette_name = Self::get_file_name(path);
 
         let map = rx.recv().unwrap();
         self.all_entries = Self::get_sorted_entries(map);
@@ -214,6 +219,20 @@ impl Pallette {
         println!("Pallette extracted");
 
         Some(pix)
+    }
+
+    fn get_file_name(path: &str) -> String {
+        let parts: Vec<&str> = path.split('/').collect();
+        let f_name = parts[parts.len() - 1];
+        // let f_parts = f_name.split('.');
+
+        if let Some(pos) = f_name.find('.') {
+            // Slice the string up to the found position
+            let trimmed = &f_name[..pos]; // Trims before the character
+            trimmed.to_string()
+        } else {
+            f_name.to_string()
+        }
     }
 
     fn output_pallette_txt(&mut self, pal_name: &str) -> io::Result<()> {

@@ -74,7 +74,7 @@ impl eframe::App for PalletteApp {
                             self.color_options_panel(ui, ctx);
                             self.similar_selector(ui, ctx);
 
-                            ui.text_edit_singleline(&mut self.pallette_name);
+                            ui.text_edit_singleline(&mut self.pallette.pallette_name);
 
                             self.save_buttons(ui);
                             self.reset_button(ui);
