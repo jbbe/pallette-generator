@@ -1,6 +1,6 @@
 use eframe::egui;
 
-use egui::{ColorImage, UserData, ViewportCommand};
+use egui::{ColorImage, Sense, UserData, ViewportCommand};
 use image::{DynamicImage, RgbaImage};
 
 use crate::{
@@ -456,7 +456,13 @@ impl PalletteApp {
     fn color_selectable_img(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                if ui.button("Color Pick").clicked() {
+                if ui
+                    .add(egui::ImageButton::new(egui::include_image!(
+                        "../assets/eye-dropper.svg"
+                    )))
+                    // .sense(Sense::click())
+                    .clicked()
+                {
                     self.color_picking = !self.color_picking;
                 }
             });
