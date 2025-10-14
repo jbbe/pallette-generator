@@ -1,6 +1,6 @@
 use eframe::egui;
 
-use egui::ColorImage;
+use egui::{ColorImage, UserData, ViewportCommand};
 use image::{DynamicImage, RgbaImage};
 
 use crate::{
@@ -30,6 +30,8 @@ pub struct PalletteApp {
     panel_width: f32,
     show_details: Option<(usize, ColorDetail)>,
     new_color: ColorDetail,
+    color_picking: bool,
+    last_color_picked: Option<image::Rgb<u8>>,
 }
 
 const PALLETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
@@ -46,6 +48,8 @@ impl Default for PalletteApp {
             panel_width: 400.,
             show_details: None,
             new_color: ColorDetail::default(),
+            color_picking: false,
+            last_color_picked: None,
         }
     }
 }
@@ -80,6 +84,55 @@ impl eframe::App for PalletteApp {
                     self.image_panel(ui, ctx);
                 });
             });
+
+            let img_start = egui::Vec2::new(870., 60.);
+            if self.color_picking {
+                ui.ctx()
+                    .send_viewport_cmd(ViewportCommand::Screenshot(UserData::default()));
+                ctx.set_cursor_icon(egui::CursorIcon::Crosshair);
+                let mouse_pos = ctx.pointer_latest_pos().unwrap_or_default();
+                if mouse_pos != egui::pos2(0.0, 0.0) {
+                    // Draw the panel at the mouse position
+                    let panel_size = egui::Vec2::new(50., 50.);
+                    let panel_anchor = egui::Pos2::new(mouse_pos.x + 20., mouse_pos.y + 20.);
+                    let panel_rect = egui::Rect::from_min_size(panel_anchor, panel_size);
+                    // let text_position = panel_rect.center();
+
+                    let x = mouse_pos.x;
+                    let y = mouse_pos.y;
+
+                    if x > img_start[0] && y > img_start[1] {
+                        let pixel = self.get_pixel_at(ui, x, y);
+                        if let Some(p) = pixel {
+                            self.last_color_picked = Some(p);
+                            let r = p[0];
+                            let g = p[1];
+                            let b = p[2];
+                            // let str = format!("({x}, {y})\n ({r}, {g}, {b})");
+                            // Draw the text
+                            let stroke = egui::Stroke::new(3.0, egui::Color32::from_rgb(0, 0, 0)); // Red
+                            ui.painter().rect_stroke(
+                                panel_rect,
+                                5.0,
+                                stroke,
+                                egui::StrokeKind::Outside,
+                            );
+                            ui.painter().rect_filled(
+                                panel_rect,
+                                5.0,
+                                egui::Color32::from_rgb(r, g, b),
+                            );
+                            // ui.painter().text(
+                            //     text_position,
+                            //     egui::Align2::CENTER_CENTER,
+                            //     str,
+                            //     FontId::proportional(14.0),
+                            //     Color32::WHITE.gamma_multiply(1.),
+                            // );
+                        }
+                    }
+                }
+            }
         });
 
         preview_files_being_dropped(ctx);
@@ -117,6 +170,55 @@ impl PalletteApp {
                 self.app_state = AppState::PalletteGenerated;
             }
         });
+    }
+
+    fn get_pixel_at(&mut self, ui: &mut egui::Ui, x: f32, y: f32) -> Option<image::Rgb<u8>> {
+        let image = ui.ctx().input(|i| {
+            i.events
+                .iter()
+                .filter_map(|e| {
+                    if let egui::Event::Screenshot { image, .. } = e {
+                        Some(image.clone())
+                    } else {
+                        None
+                    }
+                })
+                .next_back()
+        });
+
+        match image {
+            Some(img) => {
+                let x_u = x as usize;
+                let y_u = y as usize;
+                // img.pixels()
+                // let [width, height] = img.();
+                let idx = img.width() * y_u + x_u;
+
+                if x_u < img.width() && y_u < img.height() {
+                    let pixel = img.pixels[idx].clone();
+                    // return (pixel[0], pixel[1], pixel[2], pixel[3]); // RGBA
+                    Some(image::Rgb([pixel[0], pixel[1], pixel[2]]))
+                } else {
+                    None
+                }
+            }
+            None => None,
+        }
+        //     Some(tex_handle) => {
+        //         // let data = tex_handle();
+        //         let [width, height] = tex_handle.size();
+
+        //         if x_u < width && y_u < height {
+        //             let pixel = tex_handle.pixel(x, y);
+        //             // return (pixel[0], pixel[1], pixel[2], pixel[3]); // RGBA
+        //             Some(image::Rgb([pixel[0], pixel[1], pixel[2]]))
+        //         } else {
+        //             None
+        //         }
+        //     }
+        //     None => None,
+        // }
+        // image::Rgb([0, 0, 0])
     }
 
     fn similar_selector(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
@@ -345,33 +447,55 @@ impl PalletteApp {
                     ui.image(egui::include_image!("../assets/pallette.svg"));
                 }
                 SourceFileState::File => {
-                    ui.horizontal(|ui| {
-                        if let Some(texture_id) = &self.texture_id {
-                            let desired_size = egui::vec2(400.0, 500.0);
-                            ui.add(egui::Image::new(texture_id).fit_to_exact_size(desired_size));
-                        } else {
-                            ui.label("Loading image...");
+                    self.color_selectable_img(ui, ctx);
+                }
+            }
+        });
+    }
 
-                            if let Some(picked_path) = &self.picked_path {
-                                if let Ok(img) = load_image(picked_path) {
-                                    let color_image = convert_img_for_display(img);
-                                    self.texture_id = Some(ctx.load_texture(
-                                        "my_image",
-                                        color_image,
-                                        Default::default(),
-                                    ));
-                                }
-                                ui.horizontal(|ui| {
-                                    ui.label("Picked file:");
-                                    ui.monospace(picked_path);
-                                });
-                                if ui.button("Extract Pallette").clicked() {
-                                    self.pallette.update(picked_path);
-                                    self.app_state = AppState::PalletteGenerated;
-                                }
-                            }
-                        }
+    fn color_selectable_img(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                if ui.button("Color Pick").clicked() {
+                    self.color_picking = !self.color_picking;
+                }
+            });
+            if let Some(texture_id) = &self.texture_id {
+                let desired_size = egui::vec2(300.0, 500.0);
+
+                if ui
+                    .add(
+                        egui::Image::new(texture_id)
+                            .fit_to_exact_size(desired_size)
+                            .sense(egui::Sense::click()),
+                    )
+                    .clicked()
+                {
+                    if self.color_picking
+                        && let Some(c) = self.last_color_picked
+                    {
+                        self.pallette.add_new_color(c);
+                        self.color_picking = false;
+                    }
+                }
+            } else {
+                ui.label("Loading image...");
+
+                if let Some(picked_path) = &self.picked_path {
+                    if let Ok(img) = load_image(picked_path) {
+                        let color_image = convert_img_for_display(img);
+                        // self.loaded_img = Some(color_image);
+                        self.texture_id =
+                            Some(ctx.load_texture("my_image", color_image, Default::default()));
+                    }
+                    ui.horizontal(|ui| {
+                        ui.label("Picked file:");
+                        ui.monospace(picked_path);
                     });
+                    if ui.button("Extract Pallette").clicked() {
+                        self.pallette.update(picked_path);
+                        self.app_state = AppState::PalletteGenerated;
+                    }
                 }
             }
         });
