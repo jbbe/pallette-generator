@@ -1,7 +1,7 @@
 use eframe::egui;
 
-use egui::{ColorImage, Sense, UserData, ViewportCommand};
-use image::{DynamicImage, RgbaImage};
+use egui::{ColorImage, UserData, ViewportCommand};
+use image::{DynamicImage, Rgb, RgbaImage};
 
 use crate::{
     core::{color::ColorUtil, color_detail::ColorDetail, pallette::Pallette, similar::Similar},
@@ -296,12 +296,6 @@ impl PalletteApp {
                     if Self::color_button(ui, detail.egui_color, &detail.hex).clicked() {
                         ctx.copy_text(detail.hex.to_owned());
                     }
-                    if ui
-                        .add(egui::Button::new(egui::RichText::new("Add")))
-                        .clicked()
-                    {
-                        println!("clicking this does nothing")
-                    }
                 });
                 if Self::base_button(ui, "Similar").clicked() {
                     self.similar = Some(Similar::new_similar(
@@ -318,9 +312,33 @@ impl PalletteApp {
                     {
                         ctx.copy_text(detail.complement_hex.to_owned());
                     }
-                    if Self::base_button(ui, "Add").clicked() {
-                        self.pallette.add_new_color(detail.complement);
+                    // self.add_color_btn(ui, detail.complement);
+                });
+                ui.vertical(|ui| {
+                    ui.label("Split Compliment 1");
+                    if Self::color_button(
+                        ui,
+                        detail.split_complement_egui.0,
+                        &detail.split_complement_hex.0,
+                    )
+                    .clicked()
+                    {
+                        ctx.copy_text(detail.split_complement_hex.1.to_owned());
                     }
+                    // self.add_color_btn(ui, detail.split_complement.0);
+                });
+                ui.vertical(|ui| {
+                    ui.label("Split Compliment 2");
+                    if Self::color_button(
+                        ui,
+                        detail.split_complement_egui.1,
+                        &detail.split_complement_hex.1,
+                    )
+                    .clicked()
+                    {
+                        ctx.copy_text(detail.split_complement_hex.1.to_owned());
+                    }
+                    // self.add_color_btn(ui, detail.split_complement.1);
                 });
             });
             if Self::base_button(ui, "Similar").clicked() {
@@ -333,6 +351,20 @@ impl PalletteApp {
             }
         } else {
             self.add_color(ui, ctx);
+        }
+        if self.show_details.is_some() {
+            if ui
+                .add(egui::Button::new(egui::RichText::new("Close")))
+                .clicked()
+            {
+                self.show_details = None;
+            }
+        }
+    }
+
+    fn add_color_btn(&mut self, ui: &mut egui::Ui, color: Rgb<u8>) {
+        if Self::base_button(ui, "Add").clicked() {
+            self.pallette.add_new_color(color);
         }
     }
 
