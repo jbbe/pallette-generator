@@ -23,16 +23,15 @@ impl ColorNames {
 
             let c = Rgb([r, g, b]);
             map.entry(c).or_insert(color_name_pretty.to_owned());
-
-            println!("{:?}", record);
+            // println!("{:?}", record);
         }
         Ok(map)
     }
 
     pub fn get_color_name(color: &Rgb<u8>) -> Option<String> {
-        let r = color[0];
-        let g = color[1];
-        let b = color[2];
+        // let r = color[0];
+        // let g = color[1];
+        // let b = color[2];
         // println!("try get color name {r} {g} {b}");
         let lock = COLOR_DICT.lock().unwrap();
         let binding = String::default();

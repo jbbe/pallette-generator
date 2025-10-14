@@ -29,7 +29,6 @@ impl HSV {
         } else if g_n == c_max {
             60. * (((b_n - r_n) / delta) + 2.)
         } else {
-            // if b_n == c_max
             60. * (((r_n - g_n) / delta) + 4.)
         };
 

@@ -4,7 +4,10 @@ use egui::{ColorImage, UserData, ViewportCommand};
 use image::{DynamicImage, Rgb, RgbaImage};
 
 use crate::{
-    core::{color::ColorUtil, color_detail::ColorDetail, pallette::Pallette, similar::Similar},
+    core::{
+        color::ColorUtil, color_detail::ColorDetail, color_names::ColorNames, pallette::Pallette,
+        similar::Similar,
+    },
     widgets::custom_color_edit_button_srgba,
 };
 
@@ -233,6 +236,7 @@ impl PalletteApp {
                 // println!("Copy {hex}");
                 ctx.copy_text(hex.to_owned());
             }
+            Self::color_info(ui, &c);
             egui::ScrollArea::horizontal()
                 .max_width(600.)
                 .show(ui, |ui| {
@@ -246,6 +250,7 @@ impl PalletteApp {
                                 // println!("Copy {hex}");
                                 ctx.copy_text(hex.to_owned());
                             }
+                            Self::color_info(ui, &c);
                             if Self::base_button(ui, "Replace").clicked() {
                                 // self.update_similar_pallette_color(sim.color, c);
                                 self.pallette.update_color(sim.color, c);
@@ -296,6 +301,7 @@ impl PalletteApp {
                     if Self::color_button(ui, detail.egui_color, &detail.hex).clicked() {
                         ctx.copy_text(detail.hex.to_owned());
                     }
+                    Self::color_info(ui, &detail.color);
                 });
                 if Self::base_button(ui, "Similar").clicked() {
                     self.similar = Some(Similar::new_similar(
@@ -312,6 +318,7 @@ impl PalletteApp {
                     {
                         ctx.copy_text(detail.complement_hex.to_owned());
                     }
+                    Self::color_info(ui, &detail.complement);
                     // self.add_color_btn(ui, detail.complement);
                 });
                 ui.vertical(|ui| {
@@ -323,8 +330,10 @@ impl PalletteApp {
                     )
                     .clicked()
                     {
-                        ctx.copy_text(detail.split_complement_hex.1.to_owned());
+                        ctx.copy_text(detail.split_complement_hex.0.to_owned());
                     }
+                    Self::color_info(ui, &detail.split_complement.0);
+                    // self.add_color_btn(ui, detail.complement);
                     // self.add_color_btn(ui, detail.split_complement.0);
                 });
                 ui.vertical(|ui| {
@@ -338,6 +347,7 @@ impl PalletteApp {
                     {
                         ctx.copy_text(detail.split_complement_hex.1.to_owned());
                     }
+                    Self::color_info(ui, &detail.split_complement.1);
                     // self.add_color_btn(ui, detail.split_complem`nt.1);
                 });
             });
@@ -398,6 +408,7 @@ impl PalletteApp {
         }
         ui.vertical(|ui| {
             ui.set_min_width(90.);
+            Self::color_info(ui, &c);
             if Self::base_button(ui, "Swap").clicked() {
                 self.pallette.swap_top_color(i);
             }
@@ -536,6 +547,13 @@ impl PalletteApp {
                 }
             }
         });
+    }
+
+    fn color_info(ui: &mut egui::Ui, color: &Rgb<u8>) {
+        let c_name = ColorNames::get_color_name(color);
+        if let Some(name) = c_name {
+            ui.label(name);
+        }
     }
 }
 
