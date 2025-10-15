@@ -1,8 +1,8 @@
 use crate::core::color::Rgb;
 use eframe::egui;
 use egui::{
-    Color32, ColorImage, Mesh, Pos2, Rect, Response, Sense, Shape, TextureHandle, TextureId, Vec2,
-    emath,
+    Color32, ColorImage, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke, TextureHandle,
+    TextureId, UserData, Vec2, ViewportCommand, emath,
 };
 use image::{DynamicImage, RgbaImage};
 
@@ -27,7 +27,9 @@ impl eframe::App for ColorWheelApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.label("Wheel");
             self.ui_wheel(ui, ctx);
-            self.color_info(ui, ctx)
+            self.color_info(ui, ctx);
+            ui.ctx()
+                .send_viewport_cmd(ViewportCommand::Screenshot(UserData::default()));
         });
     }
 }
@@ -77,20 +79,73 @@ impl ColorWheelApp {
                 *point = to_screen.from().clamp(*point);
 
                 let point_in_screen = to_screen.transform_pos(*point);
-                let stroke = ui.style().interact(&point_response).fg_stroke;
+                let stroke_with_interaction = if point_response.hovered() {
+                    // Change color on hover
+                    Color32::from_rgb(200, 100, 100) // Lighter red on hover
+                } else {
+                    Color32::from_rgb(100, 0, 0) // Darker red when not hovered
+                };
+
+                let stroke = Stroke::new(control_point_radius, stroke_with_interaction);
+
+                // let stroke = ui.style().interact(&point_response).fg_stroke;
 
                 Shape::circle_stroke(point_in_screen, control_point_radius, stroke)
             })
             .collect();
         painter.extend(control_point_shapes);
 
+        let point = self.control_points[0];
+        let point_in_screen = to_screen.transform_pos(point);
+
+        let c = self.get_pixel_at(ui, point_in_screen.x, point_in_screen.y);
+        if let Some(c1) = c {
+            self.color = c1;
+        }
         response
     }
-    fn color_info(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+    fn color_info(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
         for p in self.control_points.iter() {
             let x = p.x;
             let y = p.y;
             ui.label(format!("({x}, {y})"));
+        }
+        let r = self.color[0];
+        let g = self.color[1];
+        let b = self.color[2];
+        ui.label(format!("Color: r: {r} g: {g} b: {b}"));
+    }
+    fn get_pixel_at(&mut self, ui: &mut egui::Ui, x: f32, y: f32) -> Option<Rgb<u8>> {
+        let image = ui.ctx().input(|i| {
+            i.events
+                .iter()
+                .filter_map(|e| {
+                    if let egui::Event::Screenshot { image, .. } = e {
+                        Some(image.clone())
+                    } else {
+                        None
+                    }
+                })
+                .next_back()
+        });
+
+        match image {
+            Some(img) => {
+                let x_u = x as usize;
+                let y_u = y as usize;
+                // img.pixels()
+                // let [width, height] = img.();
+                let idx = img.width() * y_u + x_u;
+
+                if x_u < img.width() && y_u < img.height() {
+                    let pixel = img.pixels[idx].clone();
+                    // return (pixel[0], pixel[1], pixel[2], pixel[3]); // RGBA
+                    Some(Rgb([pixel[0], pixel[1], pixel[2]]))
+                } else {
+                    None
+                }
+            }
+            None => None,
         }
     }
 }
