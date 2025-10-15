@@ -1,29 +1,37 @@
-use crate::core::color::Rgb;
+use crate::core::{
+    color::Rgb,
+    color_relation::{ColorRelation, RelationType},
+};
 use eframe::egui;
 use egui::{
-    Color32, ColorImage, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke, TextureHandle,
-    TextureId, UserData, Vec2, ViewportCommand, emath,
+    Color32, ColorImage, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke, TextureHandle, UserData,
+    Vec2, ViewportCommand, emath,
 };
-use image::{DynamicImage, RgbaImage};
 
+const PALETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
 pub struct ColorWheelApp {
-    color: Rgb<u8>,
+    color: ColorRelation,
     wheel_texture_id: Option<TextureHandle>,
     control_points: [Pos2; 2],
+    relation_type: RelationType,
 }
 
 impl Default for ColorWheelApp {
     fn default() -> Self {
         Self {
-            color: Rgb([1, 1, 1]),
+            color: ColorRelation::default(),
             wheel_texture_id: None,
             control_points: [Pos2 { x: 300., y: 300. }, Pos2 { x: 420., y: 190. }],
+            relation_type: RelationType::Complement,
         }
     }
 }
 
 impl eframe::App for ColorWheelApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if self.color.relation_type != self.relation_type {
+            self.color.set_relation_type(self.relation_type.clone());
+        }
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.label("Wheel");
             self.ui_wheel(ui, ctx);
@@ -68,29 +76,37 @@ impl ColorWheelApp {
             .enumerate()
             // .take(self.degree)
             .map(|(i, point)| {
-                let size = Vec2::splat(2.0 * control_point_radius);
-
+                let size = if i == 0 {
+                    Vec2::splat(3.0 * control_point_radius)
+                } else {
+                    Vec2::splat(1.0 * control_point_radius)
+                };
                 let point_in_screen = to_screen.transform_pos(*point);
                 let point_rect = Rect::from_center_size(point_in_screen, size);
                 let point_id = response.id.with(i);
-                let point_response = ui.interact(point_rect, point_id, Sense::drag());
+                if i == 0 {
+                    let point_response = ui.interact(point_rect, point_id, Sense::drag());
 
-                *point += point_response.drag_delta();
-                *point = to_screen.from().clamp(*point);
+                    *point += point_response.drag_delta();
+                    *point = to_screen.from().clamp(*point);
+                    let point_in_screen = to_screen.transform_pos(*point);
+                    let stroke_with_interaction = if point_response.hovered() {
+                        // Change color on hover
+                        Color32::from_rgb(200, 100, 100) // Lighter red on hover
+                    } else {
+                        Color32::from_rgb(100, 0, 0) // Darker red when not hovered
+                    };
 
-                let point_in_screen = to_screen.transform_pos(*point);
-                let stroke_with_interaction = if point_response.hovered() {
-                    // Change color on hover
-                    Color32::from_rgb(200, 100, 100) // Lighter red on hover
+                    let stroke = Stroke::new(control_point_radius, stroke_with_interaction);
+
+                    Shape::circle_stroke(point_in_screen, control_point_radius, stroke)
                 } else {
-                    Color32::from_rgb(100, 0, 0) // Darker red when not hovered
-                };
+                    // Lighter red on hover
+                    let stroke =
+                        Stroke::new(control_point_radius, Color32::from_rgb(200, 100, 100));
 
-                let stroke = Stroke::new(control_point_radius, stroke_with_interaction);
-
-                // let stroke = ui.style().interact(&point_response).fg_stroke;
-
-                Shape::circle_stroke(point_in_screen, control_point_radius, stroke)
+                    Shape::circle_stroke(point_in_screen, control_point_radius, stroke)
+                }
             })
             .collect();
         painter.extend(control_point_shapes);
@@ -100,21 +116,55 @@ impl ColorWheelApp {
 
         let c = self.get_pixel_at(ui, point_in_screen.x, point_in_screen.y);
         if let Some(c1) = c {
-            self.color = c1;
+            self.color.set_color(c1);
         }
         response
     }
     fn color_info(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
+        let rt = &self.relation_type;
+        egui::ComboBox::from_label("Take your pick")
+            .selected_text(format!("{rt:?}"))
+            .show_ui(ui, |ui| {
+                ui.selectable_value(
+                    &mut self.relation_type,
+                    RelationType::Complement,
+                    "Complement",
+                );
+                ui.selectable_value(
+                    &mut self.relation_type,
+                    RelationType::SplitComplement,
+                    "Split Complement",
+                );
+            });
+
         for p in self.control_points.iter() {
             let x = p.x;
             let y = p.y;
             ui.label(format!("({x}, {y})"));
         }
-        let r = self.color[0];
-        let g = self.color[1];
-        let b = self.color[2];
+        let r = self.color.color[0];
+        let g = self.color.color[1];
+        let b = self.color.color[2];
         ui.label(format!("Color: r: {r} g: {g} b: {b}"));
+        ui.add_sized(
+            PALETTE_BUTTON_SIZE,
+            egui::Button::new(egui::RichText::new("Color")).fill(self.color.egui_color), // .sense(egui::Sense::click()),
+        );
+        ui.label("Relation");
+        for c in self.color.related_colors.iter() {
+            let r = c[0];
+            let g = c[1];
+            let b = c[2];
+            ui.label(format!("Related Color: r: {r} g: {g} b: {b}"));
+        }
+        for c in self.color.related_egui_colors.iter() {
+            ui.add_sized(
+                PALETTE_BUTTON_SIZE,
+                egui::Button::new(egui::RichText::new("Related")).fill(*c), // .sense(egui::Sense::click()),
+            );
+        }
     }
+
     fn get_pixel_at(&mut self, ui: &mut egui::Ui, x: f32, y: f32) -> Option<Rgb<u8>> {
         let image = ui.ctx().input(|i| {
             i.events

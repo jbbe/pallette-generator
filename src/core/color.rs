@@ -129,6 +129,9 @@ impl ColorUtil {
     pub fn get_compliment(c: Rgb<u8>) -> Rgb<u8> {
         Rgb([255 - c[0], 255 - c[1], 255 - c[2]])
     }
+    pub fn egui_from_rgb(color: Rgb<u8>) -> egui::Color32 {
+        egui::Color32::from_rgb(color[0], color[1], color[2])
+    }
 
     pub fn rand_color() -> Rgb<u8> {
         let mut rng = rand::thread_rng();
