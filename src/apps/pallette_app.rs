@@ -510,6 +510,7 @@ impl PalletteApp {
     }
 
     fn save_pallette_list(&self) -> Result<(), Box<dyn Error>> {
+        println!("Try save pallette list");
         // let p = NativeOptions.persistence_path;
         let path = "data.json";
         let mut file = File::create(path)?;
@@ -520,6 +521,7 @@ impl PalletteApp {
     }
 
     fn load_palette_list() -> Result<Vec<Pallette>, Box<dyn Error>> {
+        println!("Try load pallette list");
         let path = "data.json";
         let json = fs::read_to_string(path)?;
         let p_list = serde_json::from_str(&json)?;
