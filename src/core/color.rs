@@ -17,6 +17,13 @@ impl Index<usize> for Rgb<u8> {
         &self.0[index]
     }
 }
+impl Index<usize> for Rgb<f32> {
+    type Output = f32;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
 
 pub struct HSV {
     h: f32,

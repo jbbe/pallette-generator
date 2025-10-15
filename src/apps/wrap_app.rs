@@ -73,11 +73,11 @@ impl WrapApp {
                 Anchor::ColorEditor,
                 &mut self.state.color_app as &mut dyn eframe::App,
             ),
-            (
-                "Color Wheel",
-                Anchor::ColorWheel,
-                &mut self.state.color_wheel_app as &mut dyn eframe::App,
-            ),
+            // (
+            //     "Color Wheel",
+            //     Anchor::ColorWheel,
+            //     &mut self.state.color_wheel_app as &mut dyn eframe::App,
+            // ),
         ];
 
         vec.into_iter()
