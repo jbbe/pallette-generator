@@ -3,7 +3,7 @@ use eframe::egui;
 // mod core;
 // mod apps;
 // mod debug;
-use crate::apps::{ColorApp, PalletteApp};
+use crate::apps::{ColorApp, PaletteApp};
 
 use crate::debug::backend_panel;
 
@@ -11,14 +11,14 @@ use crate::debug::backend_panel;
 // #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum Anchor {
     #[default]
-    PalletteEditor,
+    PaletteEditor,
     ColorEditor,
 }
 #[derive(Default)]
 // #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 // #[cfg_attr(feature = "serde", serde(default))]
 pub struct State {
-    pallette_app: PalletteApp,
+    palette_app: PaletteApp,
     color_app: ColorApp,
     // demo: DemoApp,
     // easy_mark_editor: EasyMarkApp,
@@ -62,9 +62,9 @@ impl WrapApp {
     ) -> impl Iterator<Item = (&'static str, Anchor, &mut dyn eframe::App)> {
         let vec = vec![
             (
-                "Pallette Editor",
-                Anchor::PalletteEditor,
-                &mut self.state.pallette_app as &mut dyn eframe::App,
+                "palette Editor",
+                Anchor::PaletteEditor,
+                &mut self.state.palette_app as &mut dyn eframe::App,
             ),
             (
                 "Color Editor",

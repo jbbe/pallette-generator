@@ -11,16 +11,16 @@ use crate::{
         color::{ColorUtil, Rgb},
         color_detail::ColorDetail,
         color_names::ColorNames,
-        pallette::Pallette,
+        palette::Palette,
         similar::Similar,
     },
     widgets::custom_color_edit_button_srgba,
 };
 
 enum AppState {
-    NoPallette,
-    PalletteFromImgGenerated,
-    PalletteGenerated,
+    Nopalette,
+    PaletteFromImgGenerated,
+    PaletteGenerated,
 }
 
 enum SourceFileState {
@@ -28,12 +28,12 @@ enum SourceFileState {
     File,
 }
 
-pub struct PalletteApp {
+pub struct PaletteApp {
     app_state: AppState,
     source_file_state: SourceFileState,
     picked_path: Option<String>,
-    pallette: Pallette,
-    pallette_name: String,
+    palette: Palette,
+    palette_name: String,
     texture_id: Option<egui::TextureHandle>,
     similar: Option<Similar>,
     panel_width: f32,
@@ -41,23 +41,26 @@ pub struct PalletteApp {
     new_color: ColorDetail,
     color_picking: bool,
     last_color_picked: Option<Rgb<u8>>,
-    pallette_list: Vec<Pallette>,
+    palette_list: Vec<Palette>,
 }
 
-const PALLETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
-impl Default for PalletteApp {
+const PALETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
+impl Default for PaletteApp {
     fn default() -> Self {
         let save_res = Self::load_palette_list();
-        let pallette_list = match save_res {
+        let palette_list = match save_res {
             Ok(p_l) => p_l,
-            Err(_) => Vec::new(),
+            Err(e) => {
+                println!("Error loading pallette list {}", e);
+                Vec::new()
+            }
         };
         Self {
-            app_state: AppState::NoPallette,
+            app_state: AppState::Nopalette,
             source_file_state: SourceFileState::NoFile,
             picked_path: None,
-            pallette: Pallette::default(),
-            pallette_name: "New Pallette".to_string(),
+            palette: Palette::default(),
+            palette_name: "New palette".to_string(),
             texture_id: None,
             similar: None,
             panel_width: 400.,
@@ -65,24 +68,24 @@ impl Default for PalletteApp {
             new_color: ColorDetail::default(),
             color_picking: false,
             last_color_picked: None,
-            pallette_list,
+            palette_list,
         }
     }
 }
 
-impl eframe::App for PalletteApp {
+impl eframe::App for PaletteApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let is_open = true;
-        egui::SidePanel::left("pallette_panel")
+        egui::SidePanel::left("palette_panel")
             .resizable(false)
             .show_animated(ctx, is_open, |ui| {
                 ui.add_space(4.0);
                 ui.vertical_centered(|ui| {
-                    ui.heading("Pallettes");
+                    ui.heading("palettes");
                 });
 
                 ui.separator();
-                self.pallette_list_panel(ui);
+                self.palette_list_panel(ui);
                 // self.backend_panel_contents(ui, frame, &mut cmd);
             });
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -91,16 +94,16 @@ impl eframe::App for PalletteApp {
                 ui.group(|ui| {
                     ui.set_min_size(egui::Vec2::new(self.panel_width, 700.));
                     ui.vertical(|ui| match self.app_state {
-                        AppState::NoPallette => {
+                        AppState::Nopalette => {
                             self.no_file_view(ui, ctx);
                         }
-                        AppState::PalletteGenerated | AppState::PalletteFromImgGenerated => {
-                            self.pallette_control_buttons(ui);
-                            self.pallette_panel(ui, ctx);
+                        AppState::PaletteGenerated | AppState::PaletteFromImgGenerated => {
+                            self.palette_control_buttons(ui);
+                            self.palette_panel(ui, ctx);
                             self.color_options_panel(ui, ctx);
                             self.similar_selector(ui, ctx);
 
-                            ui.text_edit_singleline(&mut self.pallette.pallette_name);
+                            ui.text_edit_singleline(&mut self.palette.palette_name);
 
                             self.save_buttons(ui);
                             self.reset_button(ui);
@@ -168,14 +171,14 @@ impl eframe::App for PalletteApp {
     }
 }
 
-impl PalletteApp {
+impl PaletteApp {
     fn no_file_view(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         match self.source_file_state {
             SourceFileState::NoFile => (),
             SourceFileState::File => {
                 if let Some(picked_path) = &self.picked_path {
-                    self.pallette.update(picked_path);
-                    self.app_state = AppState::PalletteFromImgGenerated;
+                    self.palette.update(picked_path);
+                    self.app_state = AppState::PaletteFromImgGenerated;
                 }
             }
         }
@@ -194,9 +197,9 @@ impl PalletteApp {
                 }
             });
 
-            if Self::base_button(ui, "New Pallette").clicked() {
-                self.pallette = Pallette::rand_pallette();
-                self.app_state = AppState::PalletteGenerated;
+            if Self::base_button(ui, "New palette").clicked() {
+                self.palette = Palette::rand_palette();
+                self.app_state = AppState::PaletteGenerated;
             }
         });
     }
@@ -278,12 +281,12 @@ impl PalletteApp {
                             }
                             Self::color_info(ui, &c);
                             if Self::base_button(ui, "Replace").clicked() {
-                                // self.update_similar_pallette_color(sim.color, c);
-                                self.pallette.update_color(sim.color, c);
+                                // self.update_similar_palette_color(sim.color, c);
+                                self.palette.update_color(sim.color, c);
                                 // app.similar = None
                             }
                             if Self::base_button(ui, "Add").clicked() {
-                                self.pallette.add_new_color(c);
+                                self.palette.add_new_color(c);
                             }
                         }
                     });
@@ -298,7 +301,7 @@ impl PalletteApp {
         }
     }
 
-    fn pallette_panel(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+    fn palette_panel(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         // Create a grid and add items to it
         ui.horizontal(|ui| {
             ui.set_min_height(500.);
@@ -306,9 +309,9 @@ impl PalletteApp {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.vertical(|ui| {
                     ui.set_min_height(500.);
-                    egui::Grid::new("Image Pallette").show(ui, |ui| {
-                        for i in 0..self.pallette.top_rgb.len() {
-                            self.pallette_color(ui, ctx, i);
+                    egui::Grid::new("Image palette").show(ui, |ui| {
+                        for i in 0..self.palette.top_rgb.len() {
+                            self.palette_color(ui, ctx, i);
                             if (i + 1) % num_columns == 0 {
                                 ui.end_row(); // End the row after the specified number of columns
                             }
@@ -332,7 +335,7 @@ impl PalletteApp {
                 if Self::base_button(ui, "Similar").clicked() {
                     self.similar = Some(Similar::new_similar(
                         detail.color,
-                        &self.pallette.all_entries,
+                        &self.palette.all_entries,
                         10,
                         80.,
                     ))
@@ -380,7 +383,7 @@ impl PalletteApp {
             if Self::base_button(ui, "Similar").clicked() {
                 self.similar = Some(Similar::new_similar(
                     detail.color,
-                    &self.pallette.all_entries,
+                    &self.palette.all_entries,
                     10,
                     80.,
                 ))
@@ -400,15 +403,15 @@ impl PalletteApp {
 
     // fn add_color_btn(&mut self, ui: &mut egui::Ui, color: Rgb<u8>) {
     //     if Self::base_button(ui, "Add").clicked() {
-    //         self.pallette.add_new_color(color);
+    //         self.palette.add_new_color(color);
     //     }
     // }
 
-    fn pallette_list_panel(&mut self, ui: &mut egui::Ui) {
-        ui.label("pallette list panel");
-        for p in &self.pallette_list {
-            if ui.button(p.pallette_name.clone()).clicked() {
-                self.pallette = p.clone();
+    fn palette_list_panel(&mut self, ui: &mut egui::Ui) {
+        ui.label("palette list panel");
+        for p in &self.palette_list {
+            if ui.button(p.palette_name.clone()).clicked() {
+                self.palette = p.clone();
                 self.texture_id = None;
                 if p.current_path.is_some() {
                     self.source_file_state = SourceFileState::File;
@@ -426,7 +429,7 @@ impl PalletteApp {
         // ToDo Update rest of color info on color change
         if Self::base_button(ui, "Add").clicked() {
             self.new_color.update_from_egui_color(false);
-            self.pallette.add_new_color(self.new_color.color);
+            self.palette.add_new_color(self.new_color.color);
             self.new_color = ColorDetail::default();
         }
 
@@ -440,9 +443,9 @@ impl PalletteApp {
         ui.add(egui::Button::new(egui::RichText::new(text)))
     }
 
-    fn pallette_color(&mut self, ui: &mut egui::Ui, ctx: &egui::Context, i: usize) {
-        let c = self.pallette.top_rgb[i];
-        let hex = &self.pallette.top_hex[i];
+    fn palette_color(&mut self, ui: &mut egui::Ui, ctx: &egui::Context, i: usize) {
+        let c = self.palette.top_rgb[i];
+        let hex = &self.palette.top_hex[i];
         let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
 
         if Self::color_button(ui, color, hex).clicked() {
@@ -452,32 +455,32 @@ impl PalletteApp {
             ui.set_min_width(90.);
             Self::color_info(ui, &c);
             if Self::base_button(ui, "Swap").clicked() {
-                self.pallette.swap_top_color(i);
+                self.palette.swap_top_color(i);
             }
             if Self::base_button(ui, "Options").clicked() {
-                self.show_details = Some(ColorDetail::new(self.pallette.top_rgb[i]));
+                self.show_details = Some(ColorDetail::new(self.palette.top_rgb[i]));
             }
         });
     }
 
     fn color_button(ui: &mut egui::Ui, color: egui::Color32, text: &str) -> egui::Response {
         ui.add_sized(
-            PALLETTE_BUTTON_SIZE,
+            PALETTE_BUTTON_SIZE,
             egui::Button::new(egui::RichText::new(text))
                 .fill(color)
                 .sense(egui::Sense::click()),
         )
     }
 
-    fn pallette_control_buttons(&mut self, ui: &mut egui::Ui) {
-        let p_size = self.pallette.pallette_size;
+    fn palette_control_buttons(&mut self, ui: &mut egui::Ui) {
+        let p_size = self.palette.palette_size;
         ui.horizontal(|ui| {
-            ui.label(format!("Pallette Size: {p_size}"));
+            ui.label(format!("palette Size: {p_size}"));
             if ui.button("-").clicked() {
-                self.pallette.decrement_pallette_size();
+                self.palette.decrement_palette_size();
             }
             if ui.button("+").clicked() {
-                self.pallette.increment_pallette_size();
+                self.palette.increment_palette_size();
             }
         });
     }
@@ -485,23 +488,23 @@ impl PalletteApp {
     fn save_buttons(&mut self, ui: &mut egui::Ui) {
         if ui.button("Save as PNG").clicked() {
             println!("Save clicked");
-            self.pallette.save_pallette_img(self.pallette_name.clone())
+            self.palette.save_palette_img(self.palette_name.clone())
         }
         if ui.button("Save as Text").clicked() {
             println!("Save clicked");
-            self.pallette.save_pallette_text(self.pallette_name.clone())
+            self.palette.save_palette_text(self.palette_name.clone())
         }
         if ui.button("Save to List").clicked() {
             println!("Save to list");
             let idx = self
-                .pallette_list
+                .palette_list
                 .iter()
-                .position(|p| p.id == self.pallette.id);
+                .position(|p| p.id == self.palette.id);
             match idx {
-                Some(idx) => self.pallette_list[idx] = self.pallette.clone(),
-                None => self.pallette_list.push(self.pallette.clone()),
+                Some(idx) => self.palette_list[idx] = self.palette.clone(),
+                None => self.palette_list.push(self.palette.clone()),
             };
-            let e = self.save_pallette_list();
+            let e = self.save_palette_list();
             match e {
                 Ok(_) => println!("Save succeeded"),
                 Err(er) => println!("Save failed {}", er),
@@ -509,19 +512,17 @@ impl PalletteApp {
         }
     }
 
-    fn save_pallette_list(&self) -> Result<(), Box<dyn Error>> {
-        println!("Try save pallette list");
-        // let p = NativeOptions.persistence_path;
+    fn save_palette_list(&self) -> Result<(), Box<dyn Error>> {
+        println!("Try save palette list");
         let path = "data.json";
         let mut file = File::create(path)?;
-        // let mut json = String::new();
-        let json_str = serde_json::to_string(&self.pallette_list);
+        let json_str = serde_json::to_string(&self.palette_list);
         file.write_all(json_str?.as_bytes())?;
         Ok(())
     }
 
-    fn load_palette_list() -> Result<Vec<Pallette>, Box<dyn Error>> {
-        println!("Try load pallette list");
+    fn load_palette_list() -> Result<Vec<Palette>, Box<dyn Error>> {
+        println!("Try load palette list");
         let path = "data.json";
         let json = fs::read_to_string(path)?;
         let p_list = serde_json::from_str(&json)?;
@@ -531,9 +532,9 @@ impl PalletteApp {
     fn reset_button(&mut self, ui: &mut egui::Ui) {
         if ui.button("Reset").clicked() {
             println!("reset");
-            self.pallette = Pallette::default();
+            self.palette = Palette::default();
             self.picked_path = None;
-            self.app_state = AppState::NoPallette;
+            self.app_state = AppState::Nopalette;
             self.source_file_state = SourceFileState::NoFile;
             self.texture_id = None;
             self.similar = None
@@ -542,7 +543,7 @@ impl PalletteApp {
 
     fn file_picker(&mut self, ui: &mut egui::Ui) {
         if self.picked_path.is_none() {
-            ui.label("Drag and drop a file to create a pallette");
+            ui.label("Drag and drop a file to create a palette");
 
             if ui.button("Open file…").clicked()
                 && let Some(path) = rfd::FileDialog::new()
@@ -562,7 +563,7 @@ impl PalletteApp {
             match self.source_file_state {
                 SourceFileState::NoFile => {
                     ui.set_min_size(egui::Vec2::new(200., 200.));
-                    ui.image(egui::include_image!("../assets/pallette.svg"));
+                    ui.image(egui::include_image!("../assets/palette.svg"));
                 }
                 SourceFileState::File => {
                     self.color_selectable_img(ui, ctx);
@@ -597,7 +598,7 @@ impl PalletteApp {
                     if self.color_picking
                         && let Some(c) = self.last_color_picked
                     {
-                        self.pallette.add_new_color(c);
+                        self.palette.add_new_color(c);
                         self.color_picking = false;
                     }
                 }
@@ -615,9 +616,9 @@ impl PalletteApp {
                         ui.label("Picked file:");
                         ui.monospace(picked_path);
                     });
-                    if ui.button("Extract Pallette").clicked() {
-                        self.pallette.update(picked_path);
-                        self.app_state = AppState::PalletteGenerated;
+                    if ui.button("Extract palette").clicked() {
+                        self.palette.update(picked_path);
+                        self.app_state = AppState::PaletteGenerated;
                     }
                 }
             }

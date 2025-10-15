@@ -8,5 +8,5 @@ gui
 drag and drop
 Remove highly similar colors from top pick
 remove colors and replace with next top match
-pallette without source image
+palette without source image
 limit filepicker extensions

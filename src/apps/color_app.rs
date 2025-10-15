@@ -7,7 +7,7 @@ pub struct ColorApp {
     color: ColorDetail,
 }
 
-const PALLETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
+const PALETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
 impl Default for ColorApp {
     fn default() -> Self {
         Self {
@@ -25,7 +25,7 @@ impl eframe::App for ColorApp {
 impl ColorApp {
     fn color_button(ui: &mut egui::Ui, color: egui::Color32, text: &str) -> egui::Response {
         ui.add_sized(
-            PALLETTE_BUTTON_SIZE,
+            PALETTE_BUTTON_SIZE,
             egui::Button::new(egui::RichText::new(text))
                 .fill(color)
                 .sense(egui::Sense::click()),
@@ -49,7 +49,7 @@ impl ColorApp {
             // {
             //     self.similar = Some(Similar::new_similar(
             //         detail.color,
-            //         &self.pallette.all_entries,
+            //         &self.palette.all_entries,
             //         10,
             //         80.,
             //     ))

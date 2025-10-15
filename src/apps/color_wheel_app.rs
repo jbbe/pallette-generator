@@ -7,7 +7,7 @@ pub struct ColorApp {
     color: ColorDetail,
 }
 
-const PALLETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
+const palette_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
 impl Default for ColorApp {
     fn default() -> Self {
         Self {

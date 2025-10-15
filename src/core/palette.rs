@@ -14,37 +14,37 @@ use crate::core::color::{ColorUtil, Rgb};
 #[derive(Debug, Clone)]
 // #[derive(Serialize, Deserialize, Debug, Clone)]
 #[derive(Serialize, Deserialize)]
-pub(crate) struct Pallette {
+pub(crate) struct Palette {
     pub id: Uuid,
-    pub pallette_name: String,
+    pub palette_name: String,
     pub top_rgb: Vec<Rgb<u8>>,
     pub top_hex: Vec<String>,
     pub current_path: Option<String>,
     pub all_entries: Vec<(Rgb<u8>, usize)>,
-    pub pallette_size: usize,
+    pub palette_size: usize,
 }
 
-impl Default for Pallette {
+impl Default for Palette {
     fn default() -> Self {
         Self {
             id: uuid::Uuid::new_v4(),
-            pallette_name: "".to_string(),
+            palette_name: "".to_string(),
             top_rgb: Vec::new(),
             top_hex: Vec::new(),
             current_path: None,
             all_entries: Vec::new(),
-            pallette_size: 16,
+            palette_size: 16,
         }
     }
 }
 
-impl Pallette {
-    pub fn rand_pallette() -> Pallette {
-        let pallette_size = 16;
+impl Palette {
+    pub fn rand_palette() -> Palette {
+        let palette_size = 16;
         let mut top_rgb = Vec::new();
         let mut top_hex = Vec::new();
         let mut all_entries = Vec::new();
-        for _ in 0..pallette_size {
+        for _ in 0..palette_size {
             let c = ColorUtil::rand_color();
             top_rgb.push(c);
             top_hex.push(ColorUtil::rgb_to_hex(c));
@@ -53,8 +53,8 @@ impl Pallette {
 
         Self {
             id: Uuid::new_v4(),
-            pallette_name: "New Random Pallette".to_string(),
-            pallette_size,
+            palette_name: "New Random palette".to_string(),
+            palette_size,
             top_rgb,
             top_hex,
             all_entries,
@@ -77,21 +77,21 @@ impl Pallette {
             // let p= path.to_string();
             tx.send(Self::extract_pallete(&p).unwrap())
         });
-        self.pallette_name = Self::get_file_name(path);
+        self.palette_name = Self::get_file_name(path);
 
         let map = rx.recv().unwrap();
         self.all_entries = Self::get_sorted_entries(map);
-        if self.all_entries.len() < self.pallette_size {
-            self.pallette_size = self.all_entries.len()
+        if self.all_entries.len() < self.palette_size {
+            self.palette_size = self.all_entries.len()
         }
         self.update_top_colors();
     }
 
     pub fn update_top_colors(&mut self) {
-        let res = Self::get_top_colors(self.all_entries.clone(), self.pallette_size);
+        let res = Self::get_top_colors(self.all_entries.clone(), self.palette_size);
         self.top_rgb = res.0;
         self.top_hex = res.1;
-        self.pallette_size = self.top_rgb.len();
+        self.palette_size = self.top_rgb.len();
     }
 
     pub fn get_unused_entry(&mut self) -> Option<Rgb<u8>> {
@@ -132,26 +132,26 @@ impl Pallette {
         }
     }
 
-    pub fn decrement_pallette_size(&mut self) {
-        if self.pallette_size > 1 {
-            self.pallette_size -= 1;
+    pub fn decrement_palette_size(&mut self) {
+        if self.palette_size > 1 {
+            self.palette_size -= 1;
             self.update_top_colors();
         }
     }
 
-    pub fn increment_pallette_size(&mut self) {
-        if self.pallette_size < self.all_entries.len() {
-            self.pallette_size += 1;
+    pub fn increment_palette_size(&mut self) {
+        if self.palette_size < self.all_entries.len() {
+            self.palette_size += 1;
             self.update_top_colors();
         }
     }
 
-    pub fn save_pallette_img(&mut self, pallette_name: String) {
-        self.output_pallette(&pallette_name);
+    pub fn save_palette_img(&mut self, palette_name: String) {
+        self.output_palette(&palette_name);
     }
 
-    pub fn save_pallette_text(&mut self, pallette_name: String) {
-        if let Err(e) = self.output_pallette_txt(&pallette_name) {
+    pub fn save_palette_text(&mut self, palette_name: String) {
+        if let Err(e) = self.output_palette_txt(&palette_name) {
             eprintln!("Error writing to file: {}", e);
         }
     }
@@ -161,11 +161,11 @@ impl Pallette {
     //     self.top_hex = Vec::new();
     //     self.current_path = None;
     //     self.all_entries = Vec::new();
-    //     self.pallette_size = 16;
+    //     self.palette_size = 16;
     // }
 
-    fn get_sorted_entries(pallette: HashMap<Rgb<u8>, usize>) -> Vec<(Rgb<u8>, usize)> {
-        let mut entries: Vec<(Rgb<u8>, usize)> = pallette.into_iter().collect();
+    fn get_sorted_entries(palette: HashMap<Rgb<u8>, usize>) -> Vec<(Rgb<u8>, usize)> {
+        let mut entries: Vec<(Rgb<u8>, usize)> = palette.into_iter().collect();
 
         // Sort by the count in descending order
         entries.sort_by(|a, b| b.1.cmp(&a.1));
@@ -208,13 +208,13 @@ impl Pallette {
     }
 
     pub fn add_new_color(&mut self, c: Rgb<u8>) {
-        self.pallette_size += 1;
+        self.palette_size += 1;
         self.top_rgb.push(c);
         self.top_hex.push(ColorUtil::rgb_to_hex(c));
     }
 
     pub fn extract_pallete(path: &str) -> Option<HashMap<Rgb<u8>, usize>> {
-        println!("Extracting Pallette from {path} ");
+        println!("Extracting palette from {path} ");
         let img = ImageReader::open(path).unwrap().decode().unwrap();
         let rgb = img.to_rgb8();
         // let mut pixels = Vec::<PColor>::new();
@@ -224,7 +224,7 @@ impl Pallette {
             *pix.entry(local_p).or_insert(0) += 1
         }
 
-        println!("Pallette extracted");
+        println!("palette extracted");
 
         Some(pix)
     }
@@ -243,9 +243,9 @@ impl Pallette {
         }
     }
 
-    fn output_pallette_txt(&mut self, pal_name: &str) -> io::Result<()> {
+    fn output_palette_txt(&mut self, pal_name: &str) -> io::Result<()> {
         // let strs = colors.iter().map(|c| Self::rgb_to_hex(*c));
-        let output_path = format!("pallettes/{pal_name}.txt");
+        let output_path = format!("palettes/{pal_name}.txt");
         let mut output = std::fs::File::create(&output_path)?;
         for line in self.top_hex.clone().iter() {
             writeln!(output, "{}", line)?;
@@ -253,8 +253,8 @@ impl Pallette {
         Ok(())
     }
 
-    fn output_pallette(&mut self, pal_name: &str) {
-        println!("Output pallette");
+    fn output_palette(&mut self, pal_name: &str) {
+        println!("Output palette");
         let square_size = 64.;
         let margin = 16.;
         let width = 512;
@@ -296,6 +296,6 @@ impl Pallette {
                 current_x += square_size;
             }
         }
-        let _ = dt.write_png(format!("pallettes/{pal_name}.png"));
+        let _ = dt.write_png(format!("palettes/{pal_name}.png"));
     }
 }
