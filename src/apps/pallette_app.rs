@@ -1,4 +1,7 @@
 use eframe::egui;
+use std::error::Error;
+use std::fs::{self, File};
+use std::io::Write;
 
 use egui::{ColorImage, UserData, ViewportCommand};
 use image::{DynamicImage, RgbaImage};
@@ -44,7 +47,11 @@ pub struct PalletteApp {
 const PALLETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
 impl Default for PalletteApp {
     fn default() -> Self {
-        // let pallette_list = serde_json::
+        let save_res = Self::load_palette_list();
+        let pallette_list = match save_res {
+            Ok(p_l) => p_l,
+            Err(_) => Vec::new(),
+        };
         Self {
             app_state: AppState::NoPallette,
             source_file_state: SourceFileState::NoFile,
@@ -58,7 +65,7 @@ impl Default for PalletteApp {
             new_color: ColorDetail::default(),
             color_picking: false,
             last_color_picked: None,
-            pallette_list: Vec::new(),
+            pallette_list,
         }
     }
 }
@@ -494,7 +501,29 @@ impl PalletteApp {
                 Some(idx) => self.pallette_list[idx] = self.pallette.clone(),
                 None => self.pallette_list.push(self.pallette.clone()),
             };
+            let e = self.save_pallette_list();
+            match e {
+                Ok(_) => println!("Save succeeded"),
+                Err(er) => println!("Save failed {}", er),
+            }
         }
+    }
+
+    fn save_pallette_list(&self) -> Result<(), Box<dyn Error>> {
+        // let p = NativeOptions.persistence_path;
+        let path = "data.json";
+        let mut file = File::create(path)?;
+        // let mut json = String::new();
+        let json_str = serde_json::to_string(&self.pallette_list);
+        file.write_all(json_str?.as_bytes())?;
+        Ok(())
+    }
+
+    fn load_palette_list() -> Result<Vec<Pallette>, Box<dyn Error>> {
+        let path = "data.json";
+        let json = fs::read_to_string(path)?;
+        let p_list = serde_json::from_str(&json)?;
+        Ok(p_list)
     }
 
     fn reset_button(&mut self, ui: &mut egui::Ui) {
@@ -547,7 +576,6 @@ impl PalletteApp {
                     .add(egui::ImageButton::new(egui::include_image!(
                         "../assets/eye-dropper.svg"
                     )))
-                    // .sense(Sense::click())
                     .clicked()
                 {
                     self.color_picking = !self.color_picking;
