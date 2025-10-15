@@ -1,16 +1,19 @@
-use image::{ImageReader, Rgb};
+use image::ImageReader;
 use rand::rng;
 use rand::seq::SliceRandom; // For shuffling the array
 use raqote::*;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{self, Write};
 use std::sync::mpsc;
 use std::thread;
 use uuid::Uuid;
 
-use crate::core::color::ColorUtil;
+use crate::core::color::{ColorUtil, Rgb};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
+// #[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize)]
 pub(crate) struct Pallette {
     pub id: Uuid,
     pub pallette_name: String,
@@ -153,13 +156,13 @@ impl Pallette {
         }
     }
 
-    pub fn reset(&mut self) {
-        self.top_rgb = Vec::new();
-        self.top_hex = Vec::new();
-        self.current_path = None;
-        self.all_entries = Vec::new();
-        self.pallette_size = 16;
-    }
+    // pub fn reset(&mut self) {
+    //     self.top_rgb = Vec::new();
+    //     self.top_hex = Vec::new();
+    //     self.current_path = None;
+    //     self.all_entries = Vec::new();
+    //     self.pallette_size = 16;
+    // }
 
     fn get_sorted_entries(pallette: HashMap<Rgb<u8>, usize>) -> Vec<(Rgb<u8>, usize)> {
         let mut entries: Vec<(Rgb<u8>, usize)> = pallette.into_iter().collect();
@@ -217,7 +220,8 @@ impl Pallette {
         // let mut pixels = Vec::<PColor>::new();
         let mut pix = HashMap::<Rgb<u8>, usize>::new();
         for pixel in rgb.pixels() {
-            *pix.entry(*pixel).or_insert(0) += 1
+            let local_p = Rgb([pixel[0], pixel[1], pixel[2]]);
+            *pix.entry(local_p).or_insert(0) += 1
         }
 
         println!("Pallette extracted");

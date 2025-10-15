@@ -1,8 +1,22 @@
 #![allow(warnings)]
 
+use std::ops::Index;
+
 use egui::epaint::Hsva;
-use image::Rgb;
 use rand::Rng;
+use serde::{Deserialize, Serialize};
+
+// pub struct PRgb {}
+#[derive(Deserialize, Serialize, Clone, Copy, Eq, Hash, PartialEq, Debug)]
+pub struct Rgb<T>(pub [T; 3]);
+
+impl Index<usize> for Rgb<u8> {
+    type Output = u8;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
 
 pub struct HSV {
     h: f32,

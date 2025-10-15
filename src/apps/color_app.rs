@@ -1,7 +1,7 @@
+use crate::core::color::Rgb;
 use crate::core::color_names::ColorNames;
 use crate::{core::color_detail::ColorDetail, widgets::custom_color_edit_button_srgba};
 use eframe::egui;
-use image::Rgb;
 
 pub struct ColorApp {
     color: ColorDetail,

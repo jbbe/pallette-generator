@@ -1,11 +1,14 @@
 use eframe::egui;
 
 use egui::{ColorImage, UserData, ViewportCommand};
-use image::{DynamicImage, Rgb, RgbaImage};
+use image::{DynamicImage, RgbaImage};
 
 use crate::{
     core::{
-        color::ColorUtil, color_detail::ColorDetail, color_names::ColorNames, pallette::Pallette,
+        color::{ColorUtil, Rgb},
+        color_detail::ColorDetail,
+        color_names::ColorNames,
+        pallette::Pallette,
         similar::Similar,
     },
     widgets::custom_color_edit_button_srgba,
@@ -41,6 +44,7 @@ pub struct PalletteApp {
 const PALLETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
 impl Default for PalletteApp {
     fn default() -> Self {
+        // let pallette_list = serde_json::
         Self {
             app_state: AppState::NoPallette,
             source_file_state: SourceFileState::NoFile,
@@ -190,7 +194,7 @@ impl PalletteApp {
         });
     }
 
-    fn get_pixel_at(&mut self, ui: &mut egui::Ui, x: f32, y: f32) -> Option<image::Rgb<u8>> {
+    fn get_pixel_at(&mut self, ui: &mut egui::Ui, x: f32, y: f32) -> Option<Rgb<u8>> {
         let image = ui.ctx().input(|i| {
             i.events
                 .iter()
@@ -215,7 +219,7 @@ impl PalletteApp {
                 if x_u < img.width() && y_u < img.height() {
                     let pixel = img.pixels[idx].clone();
                     // return (pixel[0], pixel[1], pixel[2], pixel[3]); // RGBA
-                    Some(image::Rgb([pixel[0], pixel[1], pixel[2]]))
+                    Some(Rgb([pixel[0], pixel[1], pixel[2]]))
                 } else {
                     None
                 }

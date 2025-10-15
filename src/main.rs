@@ -10,9 +10,8 @@ mod core;
 mod debug;
 mod widgets;
 use apps::WrapApp;
-use image::Rgb;
 
-use crate::core::color_names::ColorNames;
+use crate::core::{color::Rgb, color_names::ColorNames};
 
 lazy_static! {
     static ref COLOR_DICT: Mutex<HashMap<Rgb<u8>, String>> = Mutex::new(HashMap::new());

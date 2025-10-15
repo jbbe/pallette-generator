@@ -1,6 +1,4 @@
-use image::Rgb;
-
-use crate::core::color::ColorUtil;
+use crate::core::color::{ColorUtil, Rgb};
 
 // enum SimilarType {
 //     Distance,

@@ -1,5 +1,4 @@
-use crate::COLOR_DICT;
-use image::Rgb;
+use crate::{COLOR_DICT, core::color::Rgb};
 use std::{collections::HashMap, error::Error, fs::File};
 
 pub struct ColorNames {}
