@@ -11,19 +11,6 @@ use epaint::{
 
 /// Shows a button with the given color.
 /// If the user clicks the button, a full color picker is shown.
-// ! Color picker widgets.
-
-// use crate::util::fixed_cache::FixedCache;
-// use crate::{
-//     Context, DragValue, Id, Painter, Popup, PopupCloseBehavior, Response, Sense, Ui, Widget as _,
-//     WidgetInfo, WidgetType, epaint, lerp, remap_clamp,
-// };
-// use epaint::{
-//     Mesh, Rect, Shape, Stroke, StrokeKind, Vec2,
-//     ecolor::{Color32, Hsva, HsvaGamma, Rgba},
-//     pos2, vec2,
-// };
-
 fn contrast_color(color: impl Into<Rgba>) -> Color32 {
     if color.into().intensity() < 0.5 {
         Color32::WHITE

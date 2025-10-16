@@ -9,3 +9,6 @@ pub use wrap_app::*;
 
 pub mod color_wheel_app;
 pub use color_wheel_app::*;
+
+pub mod paint_app;
+pub use paint_app::*;

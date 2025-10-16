@@ -3,7 +3,7 @@ use eframe::egui;
 // mod core;
 // mod apps;
 // mod debug;
-use crate::apps::{ColorApp, ColorWheelApp, PaletteApp};
+use crate::apps::{ColorApp, ColorWheelApp, PaintApp, PaletteApp};
 
 use crate::debug::backend_panel;
 
@@ -14,6 +14,7 @@ pub enum Anchor {
     PaletteEditor,
     ColorEditor,
     ColorWheel,
+    Paint,
 }
 #[derive(Default)]
 // #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -22,14 +23,7 @@ pub struct State {
     palette_app: PaletteApp,
     color_app: ColorApp,
     color_wheel_app: ColorWheelApp,
-    // demo: DemoApp,
-    // easy_mark_editor: EasyMarkApp,
-    // #[cfg(feature = "http")]
-    // http: crate::apps::HttpApp,
-    // #[cfg(feature = "image_viewer")]
-    // image_viewer: crate::apps::ImageViewer,
-    // pub clock: FractalClockApp,
-    // rendering_test: ColorTestApp,
+    paint_app: PaintApp,
     selected_anchor: Anchor,
     backend_panel: backend_panel::BackendPanel,
 }
@@ -73,11 +67,16 @@ impl WrapApp {
                 Anchor::ColorEditor,
                 &mut self.state.color_app as &mut dyn eframe::App,
             ),
-            // (
-            //     "Color Wheel",
-            //     Anchor::ColorWheel,
-            //     &mut self.state.color_wheel_app as &mut dyn eframe::App,
-            // ),
+            (
+                "Color Wheel",
+                Anchor::ColorWheel,
+                &mut self.state.color_wheel_app as &mut dyn eframe::App,
+            ),
+            (
+                "Paint",
+                Anchor::Paint,
+                &mut self.state.paint_app as &mut dyn eframe::App,
+            ),
         ];
 
         vec.into_iter()
