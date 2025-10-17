@@ -1,4 +1,5 @@
 use eframe::egui;
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs::{self, File};
 use std::io::Write;
@@ -17,23 +18,27 @@ use crate::{
     widgets::custom_color_edit_button_srgba,
 };
 
+#[derive(Serialize, Deserialize)]
 enum AppState {
     Nopalette,
     PaletteFromImgGenerated,
     PaletteGenerated,
 }
 
+#[derive(Serialize, Deserialize)]
 enum SourceFileState {
     NoFile,
     File,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct PaletteApp {
     app_state: AppState,
     source_file_state: SourceFileState,
     picked_path: Option<String>,
     palette: Palette,
     palette_name: String,
+    #[serde(skip_serializing, skip_deserializing)]
     texture_id: Option<egui::TextureHandle>,
     similar: Option<Similar>,
     panel_width: f32,

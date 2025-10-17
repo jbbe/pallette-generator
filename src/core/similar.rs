@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::core::color::{ColorUtil, Rgb};
 
 // enum SimilarType {
@@ -5,6 +7,7 @@ use crate::core::color::{ColorUtil, Rgb};
 //     // Complementary,
 // }
 
+#[derive(Serialize, Deserialize)]
 pub(crate) struct Similar {
     pub color: Rgb<u8>,
     pub similar_colors: Vec<(Rgb<u8>, usize, f32)>,

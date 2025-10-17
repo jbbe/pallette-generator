@@ -42,8 +42,6 @@ impl Default for RunMode {
 // ----------------------------------------------------------------------------
 
 #[derive(Default)]
-// #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-// #[cfg_attr(feature = "serde", serde(default))]
 pub struct BackendPanel {
     pub open: bool,
 

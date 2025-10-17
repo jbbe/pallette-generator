@@ -2,7 +2,9 @@ use crate::core::color::Rgb;
 use crate::core::color_names::ColorNames;
 use crate::{core::color_detail::ColorDetail, widgets::custom_color_edit_button_srgba};
 use eframe::egui;
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
 pub struct ColorApp {
     color: ColorDetail,
 }

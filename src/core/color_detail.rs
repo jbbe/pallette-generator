@@ -1,5 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::core::color::{ColorUtil, HSV, Rgb};
 
+#[derive(Serialize, Deserialize)]
 pub(crate) struct ColorDetail {
     pub egui_color: egui::Color32,
     pub color: Rgb<u8>,
@@ -16,7 +19,7 @@ pub(crate) struct ColorDetail {
 impl ColorDetail {
     pub fn new(c: Rgb<u8>) -> Self {
         let complement = ColorUtil::get_compliment(c);
-        let color_hsv = HSV::from_rgb(c);
+        let color_hsv = HSV::from_rgb_u(c);
         let split_complement = ColorUtil::split_complement(&color_hsv);
         let split_complement_egui = (
             ColorUtil::rgb_to_egui(&split_complement.0),
@@ -63,7 +66,7 @@ impl ColorDetail {
                     egui::Color32::from_rgb(complement[0], complement[1], complement[2]);
                 self.complement = complement;
 
-                self.color_hsv = HSV::from_rgb(self.color);
+                self.color_hsv = HSV::from_rgb_u(self.color);
                 self.split_complement = ColorUtil::split_complement(&self.color_hsv);
                 self.split_complement_egui = (
                     ColorUtil::rgb_to_egui(&self.split_complement.0),

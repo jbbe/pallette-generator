@@ -1,5 +1,7 @@
-use egui::{Color32, Context, Frame, Pos2, Rect, Sense, Stroke, Ui, Window, emath, vec2};
+use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, emath};
+use serde::{Deserialize, Serialize};
 
+#[derive(Deserialize, Serialize)]
 pub struct PaintApp {
     // color: ColorDetail,
     painting: Painting,
@@ -23,8 +25,7 @@ impl eframe::App for PaintApp {
     }
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(default))]
+#[derive(Deserialize, Serialize)]
 pub struct Painting {
     /// in 0-1 normalized coordinates
     lines: Vec<Vec<Pos2>>,

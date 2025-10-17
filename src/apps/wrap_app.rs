@@ -7,8 +7,7 @@ use crate::apps::{ColorApp, ColorWheelApp, PaintApp, PaletteApp};
 
 use crate::debug::backend_panel;
 
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
-// #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
 pub enum Anchor {
     #[default]
     PaletteEditor,
@@ -16,15 +15,15 @@ pub enum Anchor {
     ColorWheel,
     Paint,
 }
-#[derive(Default)]
-// #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-// #[cfg_attr(feature = "serde", serde(default))]
+#[derive(Default, serde::Deserialize, serde::Serialize)]
+// #[cfg_attr(serde(default)]
 pub struct State {
     palette_app: PaletteApp,
     color_app: ColorApp,
     color_wheel_app: ColorWheelApp,
     paint_app: PaintApp,
     selected_anchor: Anchor,
+    #[serde(skip_serializing, skip_deserializing)]
     backend_panel: backend_panel::BackendPanel,
 }
 
@@ -44,11 +43,11 @@ impl WrapApp {
         };
 
         // #[cfg(feature = "persistence")]
-        // if let Some(storage) = cc.storage
-        //     && let Some(state) = eframe::get_value(storage, eframe::APP_KEY)
-        // {
-        //     slf.state = state;
-        // }
+        if let Some(storage) = cc.storage
+            && let Some(state) = eframe::get_value(storage, eframe::APP_KEY)
+        {
+            slf.state = state;
+        }
 
         slf
     }
@@ -90,10 +89,9 @@ enum Command {
 }
 
 impl eframe::App for WrapApp {
-    // #[cfg(feature = "persistence")]
-    // fn save(&mut self, storage: &mut dyn eframe::Storage) {
-    //     eframe::set_value(storage, eframe::APP_KEY, &self.state);
-    // }
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(storage, eframe::APP_KEY, &self.state);
+    }
 
     fn clear_color(&self, visuals: &egui::Visuals) -> [f32; 4] {
         // Give the area behind the floating windows a different color, because it looks better:

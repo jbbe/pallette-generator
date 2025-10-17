@@ -1,8 +1,11 @@
 use core::f32;
 
-use crate::core::{
-    color::Rgb,
-    color_relation::{ColorRelation, RelationType},
+use crate::{
+    core::{
+        color::Rgb,
+        color_relation::{ColorRelation, RelationType},
+    },
+    widgets::color_edit_button_rgb,
 };
 use eframe::egui;
 use egui::{
@@ -11,8 +14,10 @@ use egui::{
 };
 
 const PALETTE_BUTTON_SIZE: egui::Vec2 = egui::vec2(100., 100.);
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct ColorWheelApp {
     color: ColorRelation,
+    #[serde(skip_serializing, skip_deserializing)]
     wheel_texture_id: Option<TextureHandle>,
     control_points: [Pos2; 2],
     relation_type: RelationType,
@@ -38,11 +43,12 @@ impl eframe::App for ColorWheelApp {
         }
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.label("Wheel");
-            self.ui_wheel(ui, ctx);
+            // self.ui_wheel(ui, ctx);
+            self.square_color_rel_picker(ui);
             self.color_info(ui, ctx);
-            paint_it(ui, ctx);
-            ui.ctx()
-                .send_viewport_cmd(ViewportCommand::Screenshot(UserData::default()));
+            // paint_it(ui, ctx);
+            // ui.ctx()
+            //     .send_viewport_cmd(ViewportCommand::Screenshot(UserData::default()));
         });
     }
 }
@@ -215,6 +221,12 @@ impl ColorWheelApp {
         }
         response
     }
+
+    fn square_color_rel_picker(&mut self, ui: &mut egui::Ui) {
+        // custom_color_edit_button_srgba(ui, &mut self.color.egui_color);
+        color_edit_button_rgb(ui, &mut self.color.selector_color);
+    }
+
     fn color_info(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
         let rt = &self.relation_type;
         egui::ComboBox::from_label("Take your pick")
@@ -260,7 +272,7 @@ impl ColorWheelApp {
         }
     }
 
-    fn get_pixel_at(&mut self, ui: &mut egui::Ui, x: f32, y: f32) -> Option<Rgb<u8>> {
+    fn get_pixel_at(&mut self, ui: &mut egui::Ui, x: f32, y: f32) -> Option<Rgb<f32>> {
         let image = ui.ctx().input(|i| {
             i.events
                 .iter()
@@ -285,7 +297,7 @@ impl ColorWheelApp {
                 if x_u < img.width() && y_u < img.height() {
                     let pixel = img.pixels[idx].clone();
                     // return (pixel[0], pixel[1], pixel[2], pixel[3]); // RGBA
-                    Some(Rgb([pixel[0], pixel[1], pixel[2]]))
+                    Some(Rgb([pixel[0] as f32, pixel[1] as f32, pixel[2] as f32]))
                 } else {
                     None
                 }
