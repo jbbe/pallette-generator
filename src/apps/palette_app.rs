@@ -515,6 +515,25 @@ impl PaletteApp {
                 Err(er) => println!("Save failed {}", er),
             }
         }
+        if ui.button("Delete").clicked() {
+            println!("Delete from list");
+            let idx = self
+                .palette_list
+                .iter()
+                .position(|p| p.id == self.palette.id);
+            match idx {
+                Some(idx) => {
+                    self.palette_list.remove(idx);
+                }
+                None => println!("Error deleting"),
+            };
+            let e = self.save_palette_list();
+            match e {
+                Ok(_) => println!("Save succeeded"),
+                Err(er) => println!("Save failed {}", er),
+            };
+            self.reset();
+        }
     }
 
     fn save_palette_list(&self) -> Result<(), Box<dyn Error>> {
@@ -536,14 +555,18 @@ impl PaletteApp {
 
     fn reset_button(&mut self, ui: &mut egui::Ui) {
         if ui.button("Reset").clicked() {
-            println!("reset");
-            self.palette = Palette::default();
-            self.picked_path = None;
-            self.app_state = AppState::Nopalette;
-            self.source_file_state = SourceFileState::NoFile;
-            self.texture_id = None;
-            self.similar = None
+            self.reset();
         }
+    }
+
+    fn reset(&mut self) {
+        println!("reset");
+        self.palette = Palette::default();
+        self.picked_path = None;
+        self.app_state = AppState::Nopalette;
+        self.source_file_state = SourceFileState::NoFile;
+        self.texture_id = None;
+        self.similar = None
     }
 
     fn file_picker(&mut self, ui: &mut egui::Ui) {
